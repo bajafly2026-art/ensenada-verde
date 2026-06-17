@@ -1081,4 +1081,318 @@ function readCrewFromForm(){
     return {seller:ck.dataset.seller,hours:+((hr&&hr.value)||0)};
   }).filter(Boolean);
 }
-functio
+function saleModal(id){
+  const s=id?DB.sales.find(x=>x.id===id):{date:today(),ts:today()+'T'+nowTime(),product:'',seller:DB.salespersons[0],supplier:DB.suppliers[0].name,price:'',qty:1,client:'',state:'settled',packaging:0,notes:''};
+  const newProd=!id&&window._newProductName;
+  window._newProductName=null;
+  const isEvent=id&&s.crew&&s.crew.length>0;
+  const prodOpts=DB.products.map(p=>'<option value="'+esc(p.name)+'" data-price="'+p.price+'" data-sup="'+esc(p.supplier)+'"'+((newProd?newProd:s.product)===p.name?' selected':'')+'>'+esc(p.name)+' — '+MX0(p.price)+'/'+esc(p.unit)+'</option>').join('');
+  const crewRows=DB.salespersons.map(n=>{const c=isEvent?(s.crew||[]).find(x=>x.seller===n):null;return '<label style="display:flex;align-items:center;gap:6px;padding:3px 0"><input type="checkbox" class="crewck" data-seller="'+esc(n)+'"'+(c?' checked':'')+'>'+esc(n)+'<input type="number" class="crewhr" placeholder="hrs" value="'+(c?c.hours:'')+'" step="0.5" style="width:55px;margin-left:4px;padding:2px 4px;border:1px solid var(--line);border-radius:4px"></label>';}).join('');
+  modal.innerHTML=
+    '<div class="mh"><h3>'+(id?'Edit sale':'New sale')+'</h3><button class="iconbtn" onclick="closeModal()">✕</button></div>'+
+    '<div class="mb">'+
+    '<div class="row2"><div class="field"><label>Date</label><input type="date" id="f_date" value="'+s.date+'"></div>'+
+    '<div class="field"><label>Time</label><input type="time" id="f_time" value="'+(s.ts?s.ts.slice(11,16):nowTime())+'"></div></div>'+
+    '<div class="field"><label>Status</label><select id="f_state">'+
+    Object.keys(PAY_STATES).map(k=>'<option value="'+k+'"'+(s.state===k?' selected':'')+'>'+PAY_STATES[k].label+'</option>').join('')+'</select></div>'+
+    '<div class="field"><label>Product</label><select id="f_product">'+prodOpts+
+    '<option value="__new__">⊕ Add new product…</option>'+
+    '</select></div>'+
+    '<div id="regularSeller" style="'+(isEvent?'display:none':'')+'">'+
+    '<div class="row2"><div class="field"><label>Salesperson</label><select id="f_seller">'+
+    DB.salespersons.map(n=>'<option'+(n===s.seller?' selected':'')+'>'+esc(n)+'</option>').join('')+'</select></div>'+
+    '<div class="field"><label>Supplier</label><select id="f_supplier">'+
+    DB.suppliers.map(su=>'<option'+(su.name===s.supplier?' selected':'')+'>'+esc(su.name)+'</option>').join('')+'</select></div></div>'+
+    '</div>'+
+    '<div class="field"><label><input type="checkbox" id="f_isEvent"'+(isEvent?' checked':'')+'> Event sale (split commission by hours)</label></div>'+
+    '<div id="eventBox" style="'+(isEvent?'':'display:none')+'">'+
+    '<div class="field"><label>Event name</label><input id="f_eventName" value="'+esc(isEvent?s.eventName:'')+'"></div>'+
+    '<div class="field"><b>Crew &amp; hours worked</b><br><small>Tip: commission is shared by hours. Leave all hours blank to split evenly.</small>'+
+    '<div id="crewBox">'+crewRows+'</div></div>'+
+    '</div>'+
+    '<div class="row2"><div class="field"><label>Unit price (MXN)</label><input type="number" id="f_price" value="'+(newProd?'':s.price)+'" step="0.01"></div>'+
+    '<div class="field"><label>Quantity</label><input type="number" id="f_qty" value="'+s.qty+'" step="0.5"></div></div>'+
+    '<div class="row2"><div class="field"><label>Client / channel</label><input list="clientList" id="f_client" value="'+esc(s.client)+'">'+
+    '<datalist id="clientList">'+DB.clients.map(c=>'<option>'+esc(c.name)+'</option>').join('')+'</datalist></div>'+
+    '<div class="field"><label>Packaging cost — paid by EV (MXN)</label><input type="number" id="f_pack" value="'+(s.packaging||0)+'" step="0.01"></div></div>'+
+    '<div class="field"><label>Notes</label><input id="f_notes" value="'+esc(s.notes||'')+'"></div>'+
+    '<div class="calc" id="f_calc"></div></div>'+
+    '<div class="mf">'+(id?'<button class="btn danger" onclick="delSale(\''+id+'\',true)">Delete</button>':'')+
+    '<button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+    '<button class="btn primary" onclick="saveSale(\''+(id||'')+'\')">'+(id?'Save':'Add sale')+'</button></div>';
+  openModal();
+  const pr=document.getElementById('f_product');
+  const savedId=id;
+  pr.addEventListener('change',()=>{
+    if(pr.value==='__new__'){
+      window._postModal=()=>saleModal(savedId||null);
+      closeModal();productModal();return;
+    }
+    const o=pr.selectedOptions[0];
+    if(o.dataset.price)document.getElementById('f_price').value=o.dataset.price;
+    if(o.dataset.sup)document.getElementById('f_supplier').value=o.dataset.sup;
+    liveCalc();
+  });
+  const evChk=document.getElementById('f_isEvent');
+  evChk.addEventListener('change',()=>{
+    document.getElementById('eventBox').style.display=evChk.checked?'':'none';
+    document.getElementById('regularSeller').style.display=evChk.checked?'none':'';
+  });
+  ['f_price','f_qty','f_pack'].forEach(i=>{const el=document.getElementById(i);if(el)el.addEventListener('input',liveCalc);});
+  if(newProd){
+    const opt=Array.from(document.querySelectorAll('#f_product option')).find(function(o){return o.value===newProd;});
+    if(opt){pr.value=newProd;const o=pr.selectedOptions[0];if(o&&o.dataset.price)document.getElementById('f_price').value=o.dataset.price;if(o&&o.dataset.sup)document.getElementById('f_supplier').value=o.dataset.sup;}
+  }
+  liveCalc();
+}
+function liveCalc(){
+  const price=+document.getElementById('f_price').value||0,qty=+document.getElementById('f_qty').value||0,pack=+document.getElementById('f_pack').value||0;
+  const amt=price*qty,ev=amt*EV_RATE,seller=amt*SELLER_RATE,sup=amt-ev-seller;
+  const el=document.getElementById('f_calc');if(!el)return;
+  el.innerHTML=
+    '<div><span>Sale amount</span><b>'+MX(amt)+'</b></div>'+
+    '<div><span>Salesperson (20%)</span><b>'+MX(seller)+'</b></div>'+
+    '<div><span>Supplier (60%)</span><b>'+MX(sup)+'</b></div>'+
+    '<div style="border-top:1px dashed #b9dcc6;margin-top:4px;padding-top:4px"><span>EV net after packaging</span><b>'+MX(ev-pack)+'</b></div>';
+  localize(el);
+}
+function saveSale(id){
+  const g=i=>document.getElementById(i).value;
+  const isEv=document.getElementById('f_isEvent')&&document.getElementById('f_isEvent').checked;
+  const rec={date:g('f_date'),ts:g('f_date')+'T'+(g('f_time')||nowTime()),
+    product:g('f_product'),supplier:document.getElementById('f_supplier')?g('f_supplier'):DB.suppliers[0].name,
+    price:+g('f_price'),qty:+g('f_qty'),client:g('f_client'),state:g('f_state'),
+    packaging:+g('f_pack')||0,notes:g('f_notes')};
+  if(rec.product==='__new__'){alert('Pick or add a product first');return;}
+  if(!rec.product){alert('Pick a product');return;}
+  if(!rec.price||!rec.qty){alert('Enter a price and quantity');return;}
+  if(isEv){
+    rec.crew=readCrewFromForm();
+    if(!rec.crew.length){alert(trText('Select at least one crew member who worked the event'));return;}
+    rec.eventName=g('f_eventName');
+    rec.seller='';
+  }else{
+    rec.seller=document.getElementById('f_seller')?g('f_seller'):'';
+  }
+  if(id){Object.assign(DB.sales.find(x=>x.id===id),rec);}else{rec.id=uid();DB.sales.push(rec);}
+  save();closeModal();render();
+}
+function delSale(id,fromModal){
+  if(!confirm('Delete this sale?'))return;
+  DB.sales=DB.sales.filter(x=>x.id!==id);save();if(fromModal)closeModal();render();
+}
+
+function clientModal(name){
+  const c=name?DB.clients.find(x=>x.name===name):{name:'',contact:'',location:'',channel:'Direct',notes:''};
+  modal.innerHTML=
+    '<div class="mh"><h3>'+(name?'Edit client':'New client')+'</h3><button class="iconbtn" onclick="closeModal()">✕</button></div>'+
+    '<div class="mb"><div class="field"><label>Name</label><input id="c_name" value="'+esc(c.name)+'"></div>'+
+    '<div class="row2"><div class="field"><label>Channel</label><input id="c_channel" value="'+esc(c.channel||'')+'" list="chList">'+
+    '<datalist id="chList"><option>Direct</option><option>Facebook</option><option>Instagram</option><option>WhatsApp</option><option>Referral</option></datalist></div>'+
+    '<div class="field"><label>Location</label><input id="c_location" value="'+esc(c.location||'')+'"></div></div>'+
+    '<div class="field"><label>Contact (phone / email)</label><input id="c_contact" value="'+esc(c.contact||'')+'"></div>'+
+    '<div class="field"><label>Notes / relationship</label><textarea id="c_notes" rows="3">'+esc(c.notes||'')+'</textarea></div></div>'+
+    '<div class="mf"><button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+    '<button class="btn primary" onclick="saveClient(\''+(name?esc(name).replace(/'/g,"\\'"):'')+'\')">'+(name?'Save':'Add client')+'</button></div>';
+  openModal();
+}
+function saveClient(orig){
+  const g=i=>document.getElementById(i).value.trim();
+  const rec={name:g('c_name'),channel:g('c_channel'),location:g('c_location'),contact:g('c_contact'),notes:g('c_notes')};
+  if(!rec.name){alert('Name required');return;}
+  if(orig){const c=DB.clients.find(x=>x.name===orig);const old=c.name;Object.assign(c,rec);
+    if(old!==rec.name)DB.sales.forEach(s=>{if(s.client===old)s.client=rec.name;});}
+  else{if(DB.clients.some(x=>x.name===rec.name)){alert('Client already exists');return;}DB.clients.push(rec);}
+  save();closeModal();render();
+}
+function delClient(name){
+  if(!confirm('Delete client "'+name+'"? Their sales stay in the log.'))return;
+  DB.clients=DB.clients.filter(x=>x.name!==name);save();render();
+}
+
+function productModal(name){
+  const p=name?DB.products.find(x=>x.name===name):{name:'',supplier:DB.suppliers[0].name,price:'',unit:''};
+  modal.innerHTML=
+    '<div class="mh"><h3>'+(name?'Edit product':'New product')+'</h3><button class="iconbtn" onclick="closeModal()">✕</button></div>'+
+    '<div class="mb"><div class="field"><label>Product name</label><input id="p_name" value="'+esc(p.name)+'"></div>'+
+    '<div class="row3"><div class="field"><label>Supplier</label><select id="p_supplier">'+
+    DB.suppliers.map(su=>'<option'+(su.name===p.supplier?' selected':'')+'>'+esc(su.name)+'</option>').join('')+'</select></div>'+
+    '<div class="field"><label>Default price</label><input type="number" id="p_price" value="'+p.price+'" step="0.01"></div>'+
+    '<div class="field"><label>Unit</label><input id="p_unit" value="'+esc(p.unit||'')+'"></div></div></div>'+
+    '<div class="mf"><button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+    '<button class="btn primary" onclick="saveProduct(\''+(name?esc(name).replace(/'/g,"\\'"):'')+'\')">'+(name?'Save':'Add product')+'</button></div>';
+  openModal();
+}
+function saveProduct(orig){
+  const g=i=>document.getElementById(i).value.trim();
+  const rec={name:g('p_name'),supplier:document.getElementById('p_supplier').value,price:+document.getElementById('p_price').value,unit:g('p_unit')};
+  if(!rec.name){alert('Name required');return;}
+  if(orig){const p=DB.products.find(x=>x.name===orig);const old=p.name;Object.assign(p,rec);
+    if(old!==rec.name)DB.sales.forEach(s=>{if(s.product===old)s.product=rec.name;});}
+  else{if(DB.products.some(x=>x.name===rec.name)){alert('Product already exists');return;}DB.products.push(rec);}
+  if(!orig)window._newProductName=rec.name;
+  save();closeModal();render();
+  if(window._postModal){const fn=window._postModal;window._postModal=null;fn();}
+}
+function delProduct(name){
+  if(!confirm('Delete product "'+name+'"?'))return;
+  DB.products=DB.products.filter(x=>x.name!==name);save();render();
+}
+
+function payModal(type,payee,suggested){
+  const isW=type==='withdrawal';
+  modal.innerHTML=
+    '<div class="mh"><h3>Record '+esc(type)+(payee?' · '+esc(payee):'')+'</h3><button class="iconbtn" onclick="closeModal()">✕</button></div>'+
+    '<div class="mb"><div class="row2"><div class="field"><label>Date</label><input type="date" id="y_date" value="'+today()+'"></div>'+
+    '<div class="field"><label>Type</label><select id="y_type">'+
+    '<option value="supplier"'+(type==='supplier'?' selected':'')+'>Supplier payout</option>'+
+    '<option value="seller"'+(type==='seller'?' selected':'')+'>Seller payout</option>'+
+    '<option value="deposit"'+(type==='deposit'?' selected':'')+'>Fondo de caja / deposit (in)</option>'+
+    '<option value="withdrawal"'+(type==='withdrawal'?' selected':'')+'>Withdrawal / expense</option></select></div></div>'+
+    '<div class="row2"><div class="field"><label>Payee</label><input id="y_payee" value="'+esc(payee||'')+'" placeholder="'+(isW?'reason (e.g. retiro)':'name')+'"></div>'+
+    '<div class="field"><label>Amount (MXN)</label><input type="number" id="y_amount" value="'+(suggested>0?suggested:'')+'" step="0.01"></div></div>'+
+    '<div class="field"><label>Note</label><input id="y_note" value=""></div></div>'+
+    '<div class="mf"><button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+    '<button class="btn primary" onclick="savePay()">Record</button></div>';
+  openModal();
+}
+function savePay(){
+  const g=i=>document.getElementById(i).value;
+  const rec={id:uid(),date:g('y_date'),type:g('y_type'),payee:g('y_payee').trim(),amount:+g('y_amount'),note:g('y_note').trim()};
+  if(!rec.amount){alert('Enter an amount');return;}
+  DB.settlements.push(rec);save();closeModal();render();
+}
+function delSettlement(id){
+  if(!confirm('Delete this movement?'))return;
+  DB.settlements=DB.settlements.filter(x=>x.id!==id);save();render();
+}
+
+/* ============================================================ EXPORT / IMPORT / CSV ============================================================ */
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='EnsenadaVerde_V3_'+today()+'.json';a.click();
+}
+function exportCSV(){
+  const head=['Date','Time','Product','Client','Salesperson','Supplier','UnitPrice','Qty','Amount','EV_20','Seller_20','Supplier_60','Packaging','Status','Notes'];
+  const rows=[...DB.sales].sort((a,b)=>saleSortKey(a).localeCompare(saleSortKey(b))).map(s=>{const x=split(s);
+    return [s.date,s.ts?s.ts.slice(11,16):'',s.product,s.client,isEventSale(s)?('Event:'+esc(s.eventName||'')):s.seller,s.supplier,s.price,s.qty,x.amt,x.ev,x.seller,x.supplier,x.packaging,PAY_STATES[s.state].label,s.notes||''];});
+  const cell=c=>{c=String(c==null?'':c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;};
+  const csv=[head].concat(rows).map(r=>r.map(cell).join(',')).join('\r\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download='EnsenadaVerde_sales_'+today()+'.csv';a.click();
+}
+function importJSON(file){
+  const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);
+    if(!d.sales||!d.salespersons)throw 0;
+    if(!confirm('Replace all current data with this backup?'))return;
+    if(!d.packagingExpenses)d.packagingExpenses=[];
+    if(!d.settings)d.settings={adminPin:''};
+    DB=d;save();render();alert('Imported.');
+  }catch(err){alert('That file is not a valid Ensenada Verde backup.');}};
+  r.readAsText(file);
+}
+
+/* ============================================================ INIT ============================================================ */
+document.getElementById('nav').addEventListener('click',e=>{
+  const a=e.target.closest('a');if(!a)return;
+  document.querySelectorAll('#nav a').forEach(x=>x.classList.remove('active'));a.classList.add('active');
+  currentView=a.dataset.view;render();
+});
+document.getElementById('monthFilter').addEventListener('change',e=>{currentMonth=e.target.value;render();});
+document.getElementById('btnCSV').addEventListener('click',exportCSV);
+document.getElementById('btnLang').addEventListener('click',()=>{LANG=LANG==='es'?'en':'es';lsSet('ev_lang',LANG);applyStatic();render();});
+
+applyStatic();
+render();
+startupSync();
+
+/* ============================================================
+   AUDIT LOG → Google Sheet (Apps Script Web App)
+   Posts one row per data-change event: timestamps, device user,
+   device id, event type, before/after details, IP + location,
+   browser/OS. Fully fail-safe: if logging fails the app keeps
+   working and events queue locally.
+   ============================================================ */
+(function(){
+  try{
+    if(!DB.settings)DB.settings={};
+    var DID=lsGet('ev_device_id');if(!DID){DID='dev_'+Math.random().toString(36).slice(2,10);lsSet('ev_device_id',DID);}
+    var IPINFO=null;
+    function cfg(k){return (DB.settings&&DB.settings[k])||'';}
+    function val(id){var el=document.getElementById(id);return el?String(el.value||'').trim():'';}
+    function meta(){var n=navigator,s=screen,tz='';try{tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'';}catch(e){}
+      return {ua:n.userAgent||'',platform:n.platform||'',vendor:n.vendor||'',lang:n.language||'',screen:(s.width+'x'+s.height),dpr:window.devicePixelRatio||1,tz:tz,app:'Ensenada Verde V3'};}
+    function qGet(){try{return JSON.parse(lsGet('ev_log_queue')||'[]');}catch(e){return [];}}
+    function qSet(q){lsSet('ev_log_queue',JSON.stringify(q));}
+    function stampIP(e){if(IPINFO){e.ip=IPINFO.ip||'';e.city=IPINFO.city||'';e.region=IPINFO.region||'';e.country=IPINFO.country_name||IPINFO.country||'';e.org=IPINFO.org||IPINFO.asn||'';}return e;}
+    function post(entry){
+      var url=cfg('logUrl');
+      if(!url){var q=qGet();q.push(entry);qSet(q);return;}
+      try{fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)})
+        .catch(function(){var q=qGet();q.push(entry);qSet(q);});}
+      catch(e){var q=qGet();q.push(entry);qSet(q);}
+    }
+    function flush(){if(!cfg('logUrl'))return;var q=qGet();if(!q.length)return;qSet([]);q.forEach(function(e){if(!e.ip)stampIP(e);post(e);});}
+    window.logEvent=function(event,details){
+      try{var m=meta();
+        var entry={ts_client:new Date().toISOString(),device_user:cfg('deviceUser')||'(unset)',device_id:DID,token:cfg('logToken'),event:event,details:details||{},
+          ua:m.ua,platform:m.platform,vendor:m.vendor,screen:m.screen,dpr:m.dpr,lang:m.lang,tz:m.tz,app:m.app};
+        stampIP(entry);post(entry);
+      }catch(e){}
+    };
+    window.testLog=function(){
+      var url=val('set_logurl')||cfg('logUrl');
+      if(!url){alert('Paste the Web App URL first.');return;}
+      var m=meta();
+      var entry={ts_client:new Date().toISOString(),device_user:val('set_user')||cfg('deviceUser')||'(unset)',device_id:DID,token:val('set_logtoken')||cfg('logToken'),event:'test',details:{note:'manual test from Settings'},
+        ua:m.ua,platform:m.platform,vendor:m.vendor,screen:m.screen,dpr:m.dpr,lang:m.lang,tz:m.tz,app:m.app};
+      stampIP(entry);
+      fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)})
+        .then(function(r){return r.json();})
+        .then(function(d){alert(d.ok?'✅ Test sent! Check the Log sheet.':'⚠ Response: '+JSON.stringify(d));updateQStatus();})
+        .catch(function(e){alert('❌ Error: '+e.message+'\nCheck the URL and try again.');updateQStatus();});
+    };
+    window.saveLogSettings=function(){
+      if(!DB.settings)DB.settings={};
+      DB.settings.deviceUser=val('set_user');DB.settings.logUrl=val('set_logurl');DB.settings.logToken=val('set_logtoken');
+      save();flush();updateQStatus();alert('Log settings saved.');
+    };
+    function updateQStatus(){var el=document.getElementById('set_qstatus');if(el)el.textContent=qGet().length+' event(s) queued locally';}
+    window.logQueueCount=function(){return qGet().length;};
+    window.updateQStatus=updateQStatus;
+    window.syncLogs=function(){
+      if(!cfg('logUrl')){alert('Set the Audit log Web App URL first (and Save log settings).');return;}
+      var n=qGet().length;flush();updateQStatus();
+      alert(n?('Syncing '+n+' queued event'+(n!==1?'s':'')+'… check your Google Sheet.'):'Nothing queued — all caught up.');
+    };
+    function diffColl(b,a){var bi={},ai={};b.forEach(function(x){bi[x.id]=x;});a.forEach(function(x){ai[x.id]=x;});
+      for(var i in ai){if(!bi[i])return{action:'create',record:ai[i]};}
+      for(var j in bi){if(!ai[j])return{action:'delete',record:bi[j]};}
+      for(var k in ai){if(JSON.stringify(ai[k])!==JSON.stringify(bi[k]))return{action:'edit',record:ai[k],before:bi[k]};}
+      return null;}
+    function wrapColl(name,label,key){var orig=window[name];if(typeof orig!=='function')return;
+      window[name]=function(){var before=JSON.stringify(DB[key]||[]);var r=orig.apply(this,arguments);
+        try{var d=diffColl(JSON.parse(before),DB[key]||[]);if(d)logEvent(label+'_'+d.action,d.action==='edit'?{record:d.record,before:d.before}:{record:d.record});}catch(e){}
+        return r;};}
+    wrapColl('saveSale','sale','sales');wrapColl('delSale','sale','sales');
+    wrapColl('saveClient','client','clients');wrapColl('delClient','client','clients');
+    wrapColl('saveProduct','product','products');wrapColl('delProduct','product','products');
+    wrapColl('savePkg','packaging','packagingExpenses');wrapColl('delPkg','packaging','packagingExpenses');
+    wrapColl('savePay','settlement','settlements');wrapColl('delSettlement','settlement','settlements');
+    (function(){var orig=window.startFresh;if(typeof orig==='function'){window.startFresh=function(){var b={sales:DB.sales.length,packaging:(DB.packagingExpenses||[]).length,settlements:DB.settlements.length};var r=orig.apply(this,arguments);if((b.sales+b.packaging+b.settlements)>0&&DB.sales.length===0&&(DB.packagingExpenses||[]).length===0&&DB.settlements.length===0)logEvent('reset',{cleared:b});return r;};}})();
+    (function(){var orig=window.saveAdminPin;if(typeof orig==='function'){window.saveAdminPin=function(){var r=orig.apply(this,arguments);logEvent('pin_change',{pin_set:!!cfg('adminPin')});return r;};}})();
+    var started=false;
+    function go(){if(started)return;started=true;
+      if(cfg('logUrl')&&!cfg('deviceUser')){try{var who=prompt('Audit log is on. Who is using this device? (type your name)');if(who){DB.settings.deviceUser=who.trim();save();}}catch(e){}}
+      logEvent('app_open',{});flush();
+    }
+    try{fetch('https://ipapi.co/json/').then(function(r){return r.json();}).then(function(d){IPINFO=d;go();})['catch'](go);}catch(e){go();}
+    setTimeout(go,2500);
+  }catch(e){}
+})();
+
+</script>
+</body>
+</html>
