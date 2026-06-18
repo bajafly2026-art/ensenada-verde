@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ensenada Verde · Accounting V3</title>
+<title>Ensenada Verde · Accounting V4</title>
 <style>
   :root{
     --green-900:#0a3a23; --green-800:#0e4a2f; --green-700:#0e5234; --green-600:#1f9d57;
@@ -131,7 +132,7 @@
     <div class="brand">
       <img class="brandfull" src="Graphic%20ressources/logos/2_Sin_Fondo.png" alt="Ensenada Verde" onerror="this.style.display='none';document.getElementById('brandtxt').style.display='block'">
       <div id="brandtxt" class="brandfallback" style="display:none">Ensenada Verde</div>
-      <div class="brandsub">Accounting V3</div>
+      <div class="brandsub">Accounting V4</div>
     </div>
     <nav class="nav" id="nav">
       <a data-view="dashboard" class="active"><span class="ic">📊</span><span class="txt">Dashboard</span></a>
@@ -169,7 +170,7 @@
 <script>
 "use strict";
 /* ============================================================
-   ENSENADA VERDE · ACCOUNTING V3  (self-contained, offline)
+   ENSENADA VERDE · ACCOUNTING V4  (self-contained, offline)
    Money rules: EV keeps 20% of every sale. Salesperson keeps 20%,
    taken from the supplier's side. Supplier keeps the remaining 60%.
    Packaging is paid by EV and tracked per supplier.
@@ -401,6 +402,11 @@ function mkSale(date,product,seller,supplier,price,qty,client,state,packaging){
 function uid(){return 'x'+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-3);}
 
 /* ---------- STATE ---------- */
+/* Sync reconciliation flags — declared BEFORE load() runs so a fresh, seeded
+   device starts "unsynced" and cannot push its seed over real cloud data.
+   _cloudSynced: true once we've reconciled with the cloud, OR we booted with
+   real local data already present. _cloudSavedAt: server stamp of last load. */
+var _cloudSynced=false,_cloudSavedAt='';
 let DB;
 DB=load();   /* split from declaration: keeps DB out of the temporal dead zone
                 while load()->save() run on first launch (empty storage) */
@@ -415,10 +421,18 @@ function sortData(d){d=d||DB;if(!d)return d;
   return d;
 }
 function load(){
-  try{const raw=lsGet(STORE_KEY);if(raw){const d=JSON.parse(raw);if(!d.packagingExpenses)d.packagingExpenses=[];if(!d.settings)d.settings={adminPin:''};return sortData(d);}}catch(e){}
-  const s=seed();save(s);return s;
+  try{const raw=lsGet(STORE_KEY);if(raw){const d=JSON.parse(raw);if(!d.packagingExpenses)d.packagingExpenses=[];if(!d.settings)d.settings={adminPin:''};
+    /* Shed the old per-device sync config so it stops riding along in the synced DB
+       (endpoint is hardcoded now; identity is auto from device metadata). */
+    if(d.settings){delete d.settings.logUrl;delete d.settings.logToken;delete d.settings.deviceUser;}
+    /* Booted with real local data → known device, safe to push. */
+    _cloudSynced=true;return sortData(d);}}catch(e){}
+  /* First launch (empty storage): seed LOCALLY ONLY. Never push the seed to the
+     cloud — startupSync() pulls real cloud data if any exists. (Pushing the seed
+     here is exactly what wiped the cloud DB on 2026-06-18.) */
+  const s=seed();sortData(s);lsSet(STORE_KEY,JSON.stringify(s));return s;
 }
-function save(d){DB=d||DB;sortData(DB);lsSet(STORE_KEY,JSON.stringify(DB));cloudSave();scheduleBackup();}
+function save(d,opts){DB=d||DB;sortData(DB);lsSet(STORE_KEY,JSON.stringify(DB));cloudSave(opts&&opts.allowReset);scheduleBackup();}
 
 /* ============================================================
    CLOUD SYNC  (Google Apps Script endpoint)
@@ -426,10 +440,13 @@ function save(d){DB=d||DB;sortData(DB);lsSet(STORE_KEY,JSON.stringify(DB));cloud
    On startup: GET ?action=load and refresh if cloud is newer.
    Falls back to localStorage gracefully when offline.
    ============================================================ */
-/* Default URL ensures any fresh device syncs on first load even before Settings is configured. */
-var DEFAULT_SYNC_URL='https://script.google.com/macros/s/AKfycbwjP0SZFHQbAWTtH4N46Cbdiw7SkdIyKAn6q9xCioem6_Du-N1d9UVawocog5c5Hlsp/exec';
-function getSyncUrl(){return (DB&&DB.settings&&DB.settings.logUrl)||DEFAULT_SYNC_URL;}
-function getSyncToken(){return (DB&&DB.settings&&DB.settings.logToken)||'';}
+/* ONE hardcoded endpoint — every device/browser syncs + logs here with ZERO setup.
+   (Previously this could be overridden per-device in Settings, and the override was
+   stored in the SYNCED DB — so configuring one device silently changed all of them
+   and left the others pointing nowhere. That option is gone: nothing to configure.) */
+var SYNC_URL='https://script.google.com/macros/s/AKfycbwjP0SZFHQbAWTtH4N46Cbdiw7SkdIyKAn6q9xCioem6_Du-N1d9UVawocog5c5Hlsp/exec';
+function getSyncUrl(){return SYNC_URL;}
+function getSyncToken(){return '';}
 function setSyncStatus(s){
   var el=document.getElementById('syncStatus'); if(!el)return;
   var map={
@@ -441,12 +458,16 @@ function setSyncStatus(s){
   };
   el.innerHTML=map[s]||'';
 }
-function cloudSave(){
+function cloudSave(allowReset){
   var url=getSyncUrl(); if(!url)return;
+  /* Don't push until we've reconciled with the cloud at least once (unless this
+     is an explicit reset/import). Stops a just-opened device from overwriting
+     real cloud data before startupSync has had a chance to pull it. */
+  if(!_cloudSynced && !allowReset)return;
   setSyncStatus('syncing');
   try{
     fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:'save',db:JSON.stringify(DB),token:getSyncToken()})})
+      body:JSON.stringify({action:'save',db:JSON.stringify(DB),token:getSyncToken(),allowReset:!!allowReset,baseSavedAt:_cloudSavedAt})})
       .then(function(){setSyncStatus('saved');})
       .catch(function(){setSyncStatus('offline');});
   }catch(e){setSyncStatus('offline');}
@@ -466,6 +487,7 @@ function scheduleBackup(){
 }
 function cloudBackup(){
   var url=getSyncUrl(); if(!url)return;
+  if(!_cloudSynced)return;   /* never snapshot a not-yet-reconciled (seed) device */
   try{
     fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'backup',db:JSON.stringify(DB),stamp:stampNow(),token:getSyncToken()})})
@@ -483,28 +505,39 @@ function cloudLoad(cb){
   function cleanup(){done=true;delete window[cbName];try{if(el.parentNode)el.parentNode.removeChild(el);}catch(x){}}
   window[cbName]=function(d){
     cleanup();
-    if(d.ok&&d.db){setSyncStatus('saved');try{cb(JSON.parse(d.db));}catch(e){cb(null);}}
-    else{setSyncStatus(d.ok?'idle':'error');cb(null);}
+    if(d&&d.ok){
+      _cloudSavedAt=d.savedAt||_cloudSavedAt;            /* remember server stamp */
+      _cloudSynced=true;                                 /* we've seen the cloud → safe to push */
+      if(d.db){setSyncStatus('saved');try{cb(JSON.parse(d.db),true);}catch(e){cb(null,true);}}
+      else{setSyncStatus('idle');cb(null,true);}          /* cloud reachable but empty */
+    }else{setSyncStatus(d?'error':'offline');cb(null,false);}
   };
-  el.onerror=function(){cleanup();setSyncStatus('offline');cb(null);};
+  el.onerror=function(){cleanup();setSyncStatus('offline');cb(null,false);};
   var sep=url.indexOf('?')>=0?'&':'?';
   el.src=url+sep+'action=load&callback='+cbName+'&token='+encodeURIComponent(getSyncToken());
   document.head.appendChild(el);
   /* 30-second safety timeout — GAS cold starts can take 10-15s on mobile networks */
-  setTimeout(function(){if(!done){cleanup();setSyncStatus('offline');cb(null);}},30000);
+  setTimeout(function(){if(!done){cleanup();setSyncStatus('offline');cb(null,false);}},30000);
 }
 function startupSync(){
   /* Retry up to 2 times — handles GAS cold-start timeout on slow mobile connections */
   function attempt(retriesLeft){
-    cloudLoad(function(remote){
+    cloudLoad(function(remote,reachable){
       if(remote){
         DB=remote;
         lsSet(STORE_KEY,JSON.stringify(DB));
+        _cloudSynced=true;          /* reconciled — pushes are now safe */
         currentMonth='ALL';
         render();
+      } else if(reachable){
+        _cloudSynced=true;          /* cloud reachable but empty (first-ever use) */
       } else if(retriesLeft>0){
         setSyncStatus('syncing');
         setTimeout(function(){attempt(retriesLeft-1);},3000);
+      } else {
+        /* Offline after retries. We never reached the cloud, so we can't have
+           clobbered it; allow local saves to push once connectivity returns. */
+        _cloudSynced=true;
       }
     });
   }
@@ -966,14 +999,11 @@ function settingsModal(){
     '<input id="set_pin" type="password" value="'+esc(pin)+'" placeholder="choose a PIN"></div>'+
     '<button class="btn primary" onclick="saveAdminPin()">Save PIN</button>'+
     '<div style="border-top:1px solid var(--line);margin:18px 0 12px"></div>'+
-    '<div style="font-size:11.5px;font-weight:700;color:var(--green-700);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Audit log (Google Sheet)</div>'+
-    '<div class="field"><label>This device is used by</label><input id="set_user" value="'+esc((DB.settings&&DB.settings.deviceUser)||'')+'" placeholder="who uses this device"></div>'+
-    '<div class="field"><label>Audit log Web App URL</label><input id="set_logurl" value="'+esc((DB.settings&&DB.settings.logUrl)||'')+'" placeholder="https://script.google.com/macros/s/.../exec"></div>'+
-    '<div class="field"><label>Log token (optional, must match the script)</label><input id="set_logtoken" value="'+esc((DB.settings&&DB.settings.logToken)||'')+'"></div>'+
-    '<button class="btn primary" onclick="saveLogSettings()">Save log settings</button> '+
-    '<button class="btn" onclick="if(window.testLog)testLog()">Send test</button> '+
-    '<button class="btn" onclick="if(window.syncLogs)syncLogs()">Sync now</button>'+
+    '<div style="font-size:11.5px;font-weight:700;color:var(--green-700);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Activity log (automatic)</div>'+
+    '<div class="muted" style="font-size:12px;margin-bottom:8px">Every change is logged to the Google Sheet automatically and tagged with this device. Nothing to set up.</div>'+
+    '<div id="set_devinfo" class="calc" style="font-size:12px"></div>'+
     '<div class="muted" id="set_qstatus" style="font-size:11.5px;margin-top:8px">'+(window.logQueueCount?window.logQueueCount():0)+' event(s) queued locally</div>'+
+    '<button class="btn" style="margin-top:8px" onclick="if(window.syncLogs)syncLogs()">Sync now</button>'+
     '<div style="border-top:1px solid var(--line);margin:18px 0 12px"></div>'+
     '<div style="font-size:11.5px;font-weight:700;color:var(--green-700);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Sellers</div>'+
     sellerRows+
@@ -997,6 +1027,7 @@ function settingsModal(){
     '</div>'+
     '<div class="mf"><button class="btn ghost" onclick="closeModal()">Close</button></div>';
   openModal();
+  if(window.evRenderDevInfo)window.evRenderDevInfo();
 }
 function saveAdminPin(){
   if(!DB.settings)DB.settings={};
@@ -1022,7 +1053,7 @@ function startFresh(){
   if(entered===null)return;
   if(entered!==pin){alert('Incorrect PIN. Nothing was deleted.');return;}
   if(!confirm('Start fresh? This deletes ALL sales, packaging costs and settlements. Your products, clients and salespeople are kept. This cannot be undone — use Backup first if unsure.'))return;
-  DB.sales=[];DB.packagingExpenses=[];DB.settlements=[];save();currentMonth='ALL';closeModal();render();
+  DB.sales=[];DB.packagingExpenses=[];DB.settlements=[];save(DB,{allowReset:true});currentMonth='ALL';closeModal();render();
   alert('Cleared. Record your Fondo de caja in Settlements → “+ Fondo de caja”.');
 }
 
@@ -1303,7 +1334,7 @@ function importJSON(file){
     if(!confirm('Replace all current data with this backup?'))return;
     if(!d.packagingExpenses)d.packagingExpenses=[];
     if(!d.settings)d.settings={adminPin:''};
-    DB=d;save();render();alert('Imported.');
+    DB=d;_cloudSynced=true;save(DB,{allowReset:true});render();alert('Imported.');
   }catch(err){alert('That file is not a valid Ensenada Verde backup.');}};
   r.readAsText(file);
 }
@@ -1323,11 +1354,12 @@ render();
 startupSync();
 
 /* ============================================================
-   AUDIT LOG → Google Sheet (Apps Script Web App)
-   Posts one row per data-change event: timestamps, device user,
-   device id, event type, before/after details, IP + location,
-   browser/OS. Fully fail-safe: if logging fails the app keeps
-   working and events queue locally.
+   ACTIVITY LOG → Google Sheet (Apps Script Web App)
+   Posts one row per data-change event, tagged AUTOMATICALLY by device:
+   timestamps, auto device label (browser · OS), persistent device id,
+   IP + location, event type, before/after details. No user setup, no
+   name to type. Fully fail-safe: if a post fails the event queues
+   locally and is retried (app_open / Sync now).
    ============================================================ */
 (function(){
   try{
@@ -1335,63 +1367,42 @@ startupSync();
     var DID=lsGet('ev_device_id');if(!DID){DID='dev_'+Math.random().toString(36).slice(2,10);lsSet('ev_device_id',DID);}
     var IPINFO=null;
     function cfg(k){return (DB.settings&&DB.settings[k])||'';}
-    function val(id){var el=document.getElementById(id);return el?String(el.value||'').trim():'';}
+    /* Friendly device label derived from the user agent — no typing required. */
+    function uaLabel(){var u=navigator.userAgent||'';
+      var br=/Edg\//.test(u)?'Edge':/OPR\/|Opera/.test(u)?'Opera':/Firefox\//.test(u)?'Firefox':/Chrome\//.test(u)?'Chrome':/Safari\//.test(u)?'Safari':'Browser';
+      var os=/Android/.test(u)?'Android':/iPhone|iPad|iPod/.test(u)?'iOS':/Windows/.test(u)?'Windows':/Mac OS X|Macintosh/.test(u)?'macOS':/Linux/.test(u)?'Linux':'';
+      return br+(os?' · '+os:'');}
     function meta(){var n=navigator,s=screen,tz='';try{tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'';}catch(e){}
-      return {ua:n.userAgent||'',platform:n.platform||'',vendor:n.vendor||'',lang:n.language||'',screen:(s.width+'x'+s.height),dpr:window.devicePixelRatio||1,tz:tz,app:'Ensenada Verde V3'};}
+      return {ua:n.userAgent||'',platform:n.platform||'',vendor:n.vendor||'',lang:n.language||'',screen:(s.width+'x'+s.height),dpr:window.devicePixelRatio||1,tz:tz,app:'Ensenada Verde V4',device_label:uaLabel()};}
     function qGet(){try{return JSON.parse(lsGet('ev_log_queue')||'[]');}catch(e){return [];}}
     function qSet(q){lsSet('ev_log_queue',JSON.stringify(q));}
     function stampIP(e){if(IPINFO){e.ip=IPINFO.ip||'';e.city=IPINFO.city||'';e.region=IPINFO.region||'';e.country=IPINFO.country_name||IPINFO.country||'';e.org=IPINFO.org||IPINFO.asn||'';}return e;}
+    /* no-cors + text/plain → a "simple" request, so NO CORS preflight. (The old
+       application/json POST triggered an OPTIONS preflight that Apps Script never
+       answers — which is why logging silently failed on some browsers/devices.) */
     function post(entry){
-      var url=cfg('logUrl');
-      if(!url){var q=qGet();q.push(entry);qSet(q);return;}
-      try{fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)})
+      try{fetch(getSyncUrl(),{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(entry)})
         .catch(function(){var q=qGet();q.push(entry);qSet(q);});}
       catch(e){var q=qGet();q.push(entry);qSet(q);}
     }
-    function flush(){if(!cfg('logUrl'))return;var q=qGet();if(!q.length)return;qSet([]);q.forEach(function(e){if(!e.ip)stampIP(e);post(e);});}
+    function flush(){var q=qGet();if(!q.length)return;qSet([]);q.forEach(function(e){if(!e.ip)stampIP(e);post(e);});}
     window.logEvent=function(event,details){
       try{var m=meta();
-        var entry={ts_client:new Date().toISOString(),device_user:cfg('deviceUser')||'(unset)',device_id:DID,token:cfg('logToken'),event:event,details:details||{},
+        var entry={ts_client:new Date().toISOString(),device_label:m.device_label,device_id:DID,event:event,details:details||{},
           ua:m.ua,platform:m.platform,vendor:m.vendor,screen:m.screen,dpr:m.dpr,lang:m.lang,tz:m.tz,app:m.app};
         stampIP(entry);post(entry);
       }catch(e){}
     };
-    window.testLog=function(){
-      var url=val('set_logurl')||cfg('logUrl');
-      if(!url){alert('Paste the Web App URL first.');return;}
-      var m=meta();
-      var entry={ts_client:new Date().toISOString(),device_user:val('set_user')||cfg('deviceUser')||'(unset)',device_id:DID,token:val('set_logtoken')||cfg('logToken'),event:'test',details:{note:'manual test from Settings'},
-        ua:m.ua,platform:m.platform,vendor:m.vendor,screen:m.screen,dpr:m.dpr,lang:m.lang,tz:m.tz,app:m.app};
-      stampIP(entry);
-      fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)})
-        .then(function(r){return r.json();})
-        .then(function(d){alert(d.ok?'✅ Test sent! Check the Log sheet.':'⚠ Response: '+JSON.stringify(d));updateQStatus();})
-        .catch(function(e){alert('❌ Error: '+e.message+'\nCheck the URL and try again.');updateQStatus();});
-    };
-    window.saveLogSettings=function(){
-      if(!DB.settings)DB.settings={};
-      DB.settings.deviceUser=val('set_user');DB.settings.logUrl=val('set_logurl');DB.settings.logToken=val('set_logtoken');
-      /* persist URL to localStorage immediately WITHOUT pushing local DB to cloud
-         (avoids overwriting cloud data with a new device's empty local DB) */
-      lsSet(STORE_KEY,JSON.stringify(DB));
-      /* now pull from cloud; if remote has more data, it wins but we keep device settings */
-      cloudLoad(function(remote){
-        if(remote){
-          var myDev=DB.settings.deviceUser,myUrl=DB.settings.logUrl,myTok=DB.settings.logToken;
-          DB=remote;
-          if(!DB.settings)DB.settings={};
-          DB.settings.deviceUser=myDev;DB.settings.logUrl=myUrl;DB.settings.logToken=myTok;
-          render();
-        }
-        save();flush();updateQStatus();
-        alert('Log settings saved.'+(remote?' Cloud data loaded.':''));
-      });
-    };
     function updateQStatus(){var el=document.getElementById('set_qstatus');if(el)el.textContent=qGet().length+' event(s) queued locally';}
     window.logQueueCount=function(){return qGet().length;};
     window.updateQStatus=updateQStatus;
+    /* Read-only identity surfaced in Settings — all auto, nothing to type. */
+    window.evDeviceInfo=function(){return {id:DID,label:uaLabel(),ip:(IPINFO&&IPINFO.ip)||'',city:(IPINFO&&(IPINFO.city||IPINFO.region))||''};};
+    window.evRenderDevInfo=function(){var el=document.getElementById('set_devinfo');if(!el)return;var i=window.evDeviceInfo();
+      el.innerHTML='<div><span>Device</span><b>'+i.label+'</b></div>'+
+        '<div><span>Device ID</span><b>'+i.id+'</b></div>'+
+        '<div><span>IP</span><b>'+(i.ip||'…')+(i.city?' ('+i.city+')':'')+'</b></div>';};
     window.syncLogs=function(){
-      if(!cfg('logUrl')){alert('Set the Audit log Web App URL first (and Save log settings).');return;}
       var n=qGet().length;flush();updateQStatus();
       alert(n?('Syncing '+n+' queued event'+(n!==1?'s':'')+'… check your Google Sheet.'):'Nothing queued — all caught up.');
     };
@@ -1413,7 +1424,6 @@ startupSync();
     (function(){var orig=window.saveAdminPin;if(typeof orig==='function'){window.saveAdminPin=function(){var r=orig.apply(this,arguments);logEvent('pin_change',{pin_set:!!cfg('adminPin')});return r;};}})();
     var started=false;
     function go(){if(started)return;started=true;
-      if(cfg('logUrl')&&!cfg('deviceUser')){try{var who=prompt('Audit log is on. Who is using this device? (type your name)');if(who){DB.settings.deviceUser=who.trim();save();}}catch(e){}}
       logEvent('app_open',{});flush();
     }
     try{fetch('https://ipapi.co/json/').then(function(r){return r.json();}).then(function(d){IPINFO=d;go();})['catch'](go);}catch(e){go();}
