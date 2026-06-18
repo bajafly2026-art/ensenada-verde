@@ -477,7 +477,7 @@ function cloudLoad(cb){
   setSyncStatus('syncing');
   try{
     var sep=url.indexOf('?')>=0?'&':'?';
-    fetch(url+sep+'action=load&token='+encodeURIComponent(getSyncToken()))
+    fetch(url+sep+'action=load&token='+encodeURIComponent(getSyncToken()),{credentials:'omit'})
       .then(function(r){return r.json();})
       .then(function(d){
         if(d.ok&&d.db){setSyncStatus('saved');try{cb(JSON.parse(d.db));}catch(e){cb(null);}}
