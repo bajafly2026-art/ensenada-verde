@@ -475,16 +475,22 @@ function cloudBackup(){
 function cloudLoad(cb){
   var url=getSyncUrl(); if(!url){cb(null);return;}
   setSyncStatus('syncing');
-  try{
-    var sep=url.indexOf('?')>=0?'&':'?';
-    fetch(url+sep+'action=load&token='+encodeURIComponent(getSyncToken()),{credentials:'omit'})
-      .then(function(r){return r.json();})
-      .then(function(d){
-        if(d.ok&&d.db){setSyncStatus('saved');try{cb(JSON.parse(d.db));}catch(e){cb(null);}}
-        else{setSyncStatus(d.ok?'idle':'error');cb(null);}
-      })
-      .catch(function(){setSyncStatus('offline');cb(null);});
-  }catch(e){setSyncStatus('offline');cb(null);}
+  /* JSONP — bypasses CORS entirely; works on all browsers incl. Android Chrome */
+  var cbName='_evLoad'+Date.now();
+  var el=document.createElement('script');
+  var done=false;
+  function cleanup(){done=true;delete window[cbName];try{if(el.parentNode)el.parentNode.removeChild(el);}catch(x){}}
+  window[cbName]=function(d){
+    cleanup();
+    if(d.ok&&d.db){setSyncStatus('saved');try{cb(JSON.parse(d.db));}catch(e){cb(null);}}
+    else{setSyncStatus(d.ok?'idle':'error');cb(null);}
+  };
+  el.onerror=function(){cleanup();setSyncStatus('offline');cb(null);};
+  var sep=url.indexOf('?')>=0?'&':'?';
+  el.src=url+sep+'action=load&callback='+cbName+'&token='+encodeURIComponent(getSyncToken());
+  document.head.appendChild(el);
+  /* 10-second safety timeout in case callback never fires */
+  setTimeout(function(){if(!done){cleanup();setSyncStatus('offline');cb(null);}},10000);
 }
 function startupSync(){
   cloudLoad(function(remote){
