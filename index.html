@@ -1357,7 +1357,21 @@ startupSync();
     window.saveLogSettings=function(){
       if(!DB.settings)DB.settings={};
       DB.settings.deviceUser=val('set_user');DB.settings.logUrl=val('set_logurl');DB.settings.logToken=val('set_logtoken');
-      save();flush();updateQStatus();alert('Log settings saved.');
+      /* persist URL to localStorage immediately WITHOUT pushing local DB to cloud
+         (avoids overwriting cloud data with a new device's empty local DB) */
+      lsSet(STORE_KEY,JSON.stringify(DB));
+      /* now pull from cloud; if remote has more data, it wins but we keep device settings */
+      cloudLoad(function(remote){
+        if(remote){
+          var myDev=DB.settings.deviceUser,myUrl=DB.settings.logUrl,myTok=DB.settings.logToken;
+          DB=remote;
+          if(!DB.settings)DB.settings={};
+          DB.settings.deviceUser=myDev;DB.settings.logUrl=myUrl;DB.settings.logToken=myTok;
+          render();
+        }
+        save();flush();updateQStatus();
+        alert('Log settings saved.'+(remote?' Cloud data loaded.':''));
+      });
     };
     function updateQStatus(){var el=document.getElementById('set_qstatus');if(el)el.textContent=qGet().length+' event(s) queued locally';}
     window.logQueueCount=function(){return qGet().length;};
@@ -1382,17 +1396,4 @@ startupSync();
     wrapColl('savePkg','packaging','packagingExpenses');wrapColl('delPkg','packaging','packagingExpenses');
     wrapColl('savePay','settlement','settlements');wrapColl('delSettlement','settlement','settlements');
     (function(){var orig=window.startFresh;if(typeof orig==='function'){window.startFresh=function(){var b={sales:DB.sales.length,packaging:(DB.packagingExpenses||[]).length,settlements:DB.settlements.length};var r=orig.apply(this,arguments);if((b.sales+b.packaging+b.settlements)>0&&DB.sales.length===0&&(DB.packagingExpenses||[]).length===0&&DB.settlements.length===0)logEvent('reset',{cleared:b});return r;};}})();
-    (function(){var orig=window.saveAdminPin;if(typeof orig==='function'){window.saveAdminPin=function(){var r=orig.apply(this,arguments);logEvent('pin_change',{pin_set:!!cfg('adminPin')});return r;};}})();
-    var started=false;
-    function go(){if(started)return;started=true;
-      if(cfg('logUrl')&&!cfg('deviceUser')){try{var who=prompt('Audit log is on. Who is using this device? (type your name)');if(who){DB.settings.deviceUser=who.trim();save();}}catch(e){}}
-      logEvent('app_open',{});flush();
-    }
-    try{fetch('https://ipapi.co/json/').then(function(r){return r.json();}).then(function(d){IPINFO=d;go();})['catch'](go);}catch(e){go();}
-    setTimeout(go,2500);
-  }catch(e){}
-})();
-
-</script>
-</body>
-</html>
+    (function(){var orig=window.saveA
