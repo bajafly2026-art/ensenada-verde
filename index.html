@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ensenada Verde · Accounting V3</title>
 <style>
@@ -491,18 +490,25 @@ function cloudLoad(cb){
   var sep=url.indexOf('?')>=0?'&':'?';
   el.src=url+sep+'action=load&callback='+cbName+'&token='+encodeURIComponent(getSyncToken());
   document.head.appendChild(el);
-  /* 10-second safety timeout in case callback never fires */
-  setTimeout(function(){if(!done){cleanup();setSyncStatus('offline');cb(null);}},10000);
+  /* 30-second safety timeout — GAS cold starts can take 10-15s on mobile networks */
+  setTimeout(function(){if(!done){cleanup();setSyncStatus('offline');cb(null);}},30000);
 }
 function startupSync(){
-  cloudLoad(function(remote){
-    if(!remote)return;
-    /* cloud wins — update local cache and re-render */
-    DB=remote;
-    lsSet(STORE_KEY,JSON.stringify(DB));
-    currentMonth='ALL';
-    render();
-  });
+  /* Retry up to 2 times — handles GAS cold-start timeout on slow mobile connections */
+  function attempt(retriesLeft){
+    cloudLoad(function(remote){
+      if(remote){
+        DB=remote;
+        lsSet(STORE_KEY,JSON.stringify(DB));
+        currentMonth='ALL';
+        render();
+      } else if(retriesLeft>0){
+        setSyncStatus('syncing');
+        setTimeout(function(){attempt(retriesLeft-1);},3000);
+      }
+    });
+  }
+  attempt(2);
 }
 
 /* ---------- MONEY ENGINE ---------- */
