@@ -427,7 +427,9 @@ function save(d){DB=d||DB;sortData(DB);lsSet(STORE_KEY,JSON.stringify(DB));cloud
    On startup: GET ?action=load and refresh if cloud is newer.
    Falls back to localStorage gracefully when offline.
    ============================================================ */
-function getSyncUrl(){return (DB&&DB.settings&&DB.settings.logUrl)||'';}
+/* Default URL ensures any fresh device syncs on first load even before Settings is configured. */
+var DEFAULT_SYNC_URL='https://script.google.com/macros/s/AKfycbwjP0SZFHQbAWTtH4N46Cbdiw7SkdIyKAn6q9xCioem6_Du-N1d9UVawocog5c5Hlsp/exec';
+function getSyncUrl(){return (DB&&DB.settings&&DB.settings.logUrl)||DEFAULT_SYNC_URL;}
 function getSyncToken(){return (DB&&DB.settings&&DB.settings.logToken)||'';}
 function setSyncStatus(s){
   var el=document.getElementById('syncStatus'); if(!el)return;
