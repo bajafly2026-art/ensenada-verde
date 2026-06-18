@@ -1388,7 +1388,7 @@ startupSync();
     function flush(){var q=qGet();if(!q.length)return;qSet([]);q.forEach(function(e){if(!e.ip)stampIP(e);post(e);});}
     window.logEvent=function(event,details){
       try{var m=meta();
-        var entry={ts_client:new Date().toISOString(),device_label:m.device_label,device_id:DID,event:event,details:details||{},
+        var entry={ts_client:new Date().toISOString(),device_label:m.device_label,device_user:m.device_label,device_id:DID,event:event,details:details||{},
           ua:m.ua,platform:m.platform,vendor:m.vendor,screen:m.screen,dpr:m.dpr,lang:m.lang,tz:m.tz,app:m.app};
         stampIP(entry);post(entry);
       }catch(e){}
