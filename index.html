@@ -1315,7 +1315,9 @@ function delSettlement(id){
 /* ============================================================ EXPORT / IMPORT / CSV ============================================================ */
 function exportJSON(){
   const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='EnsenadaVerde_V3_'+today()+'.json';a.click();
+  const d=new Date(),p=n=>String(n).padStart(2,'0');
+  const stamp=today()+'_'+p(d.getHours())+'-'+p(d.getMinutes())+'-'+p(d.getSeconds());
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='EnsenadaVerde_V3_'+stamp+'.json';a.click();
 }
 function exportCSV(){
   const head=['Date','Time','Product','Client','Salesperson','Supplier','UnitPrice','Qty','Amount','EV_20','Seller_20','Supplier_60','Packaging','Status','Notes'];
