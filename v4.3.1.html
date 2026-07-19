@@ -1,0 +1,1875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ensenada Verde · Accounting V4.3.1</title>
+<style>
+  :root{
+    --green-900:#0a3a23; --green-800:#0e4a2f; --green-700:#0e5234; --green-600:#1f9d57;
+    --green-500:#1fa85f; --green-400:#5cc183; --green-300:#9bdcb5; --green-100:#e6f6ec;
+    --leaf:#1fa85f; --gold:#d9a521; --rust:#c0552f; --sky:#3a7bd5;
+    --ink:#1d2a22; --muted:#6b7c70; --line:#e2ece5; --bg:#f3f8f4; --card:#ffffff;
+    --shadow:0 1px 3px rgba(20,54,31,.08),0 6px 18px rgba(20,54,31,.06);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--ink); font-size:14px; line-height:1.45;}
+  a{color:var(--green-700)}
+  .app{display:flex; min-height:100vh}
+  .side{width:210px; background:linear-gradient(180deg,var(--green-800),var(--green-900));
+    color:#dff3e6; padding:18px 0; position:sticky; top:0; height:100vh; flex-shrink:0;}
+  .brand{display:block; padding:8px 16px 16px; border-bottom:1px solid rgba(255,255,255,.08); margin-bottom:10px; text-align:center}
+  .brandfull{width:100%;max-width:170px;height:auto;display:block;margin:0 auto 6px}
+  .brandfallback{font-size:16px;font-weight:700;color:#fff;margin-bottom:4px}
+  .brandsub{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#bfe0cb;opacity:.85}
+  .nav a{display:flex;align-items:center;gap:11px;padding:10px 18px;color:#cfead9;text-decoration:none;font-weight:500;cursor:pointer;border-left:3px solid transparent}
+  .nav a .ic{width:18px;text-align:center}
+  .nav a:hover{background:rgba(255,255,255,.06)}
+  .nav a.active{background:rgba(57,168,98,.22);border-left-color:var(--leaf);color:#fff}
+  .side .foot{position:absolute;bottom:14px;left:0;right:0;padding:0 18px;font-size:11px;opacity:.6}
+  .settings-link{display:flex;align-items:center;gap:11px;margin-top:8px;padding:9px 18px;color:#9fc7ad;cursor:pointer;font-size:12.5px;font-weight:500;border-top:1px solid rgba(255,255,255,.08)}
+  .settings-link .ic{width:18px;text-align:center}
+  .settings-link:hover{color:#fff;background:rgba(255,255,255,.06)}
+  .main{flex:1;min-width:0;padding:22px 26px 60px}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+  .topbar h1{font-size:21px;margin:0;font-weight:650;letter-spacing:-.2px}
+  .topbar .sub{color:var(--muted);font-size:12.5px;margin-top:2px}
+  .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  select,input,textarea{font-family:inherit;font-size:13.5px;color:var(--ink);border:1px solid var(--line);
+    background:#fff;border-radius:9px;padding:8px 10px;outline:none}
+  select:focus,input:focus,textarea:focus{border-color:var(--green-400);box-shadow:0 0 0 3px rgba(57,168,98,.13)}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 13px;font-weight:600;font-size:13px;cursor:pointer;color:var(--ink);display:inline-flex;align-items:center;gap:6px}
+  .btn:hover{border-color:var(--green-400)}
+  .btn.primary{background:var(--green-600);border-color:var(--green-600);color:#fff}
+  .btn.primary:hover{background:var(--green-700)}
+  .btn.ghost{background:transparent}
+  .btn.sm{padding:5px 9px;font-size:12px}
+  .btn.danger{color:var(--rust);border-color:#f0d3c9}
+  .btn.danger:hover{background:#fbeee8}
+  .mtoggle{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;width:100%}
+  .mtoggle .mt{flex:1;padding:8px 10px;border:none;background:#fff;font:inherit;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted)}
+  .mtoggle .mt.on{background:var(--green-100);color:var(--green-700)}
+  .mtoggle .mt+.mt{border-left:1px solid var(--line)}
+  .grid{display:grid;gap:14px}
+  .cards{grid-template-columns:repeat(auto-fit,minmax(168px,1fr))}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px 16px;box-shadow:var(--shadow)}
+  .kpi .label{font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:6px}
+  .kpi .val{font-size:23px;font-weight:700;margin-top:7px;letter-spacing:-.5px}
+  .kpi .hint{font-size:11.5px;color:var(--muted);margin-top:3px}
+  .kpi.accent .val{color:var(--green-700)}
+  .kpi.warn .val{color:var(--gold)}
+  .kpi.bad .val{color:var(--rust)}
+  .section{margin-top:22px}
+  .section h2{font-size:15px;margin:0 0 11px;font-weight:650;display:flex;align-items:center;gap:8px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+  .panel .ph{padding:13px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .panel .ph h3{margin:0;font-size:13.5px;font-weight:650}
+  .panel .pb{padding:6px 0}
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:9px 14px;font-size:13px;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:600;background:#fafdfb;position:sticky;top:0}
+  tr:last-child td{border-bottom:none}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  .tablewrap{max-height:520px;overflow:auto}
+  .muted{color:var(--muted)}
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:600}
+  .pill.green{background:#e3f6ea;color:#1c7a42}
+  .pill.gold{background:#fbf0d8;color:#a9781b}
+  .pill.rust{background:#fbe5dc;color:#a8401f}
+  .pill.sky{background:#e2eefb;color:#2b5fa6}
+  .pill.grey{background:#eef1ef;color:#5b6b60}
+  .right{margin-left:auto}
+  .lb-row{display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid var(--line)}
+  .lb-row:last-child{border-bottom:none}
+  .rank{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-weight:700;background:#eef1ef;color:#5b6b60;flex-shrink:0}
+  .rank.r1{background:linear-gradient(135deg,#f6d365,#e0a83b);color:#fff}
+  .rank.r2{background:linear-gradient(135deg,#d7dde2,#aeb8c0);color:#fff}
+  .rank.r3{background:linear-gradient(135deg,#e8b88a,#c08552);color:#fff}
+  .lb-name{font-weight:650;min-width:90px}
+  .lb-bar{flex:1;height:10px;border-radius:6px;background:#eef3ef;overflow:hidden;min-width:60px}
+  .lb-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--green-400),var(--green-600))}
+  .lb-fig{text-align:right;min-width:96px;font-variant-numeric:tabular-nums}
+  .lb-fig b{font-size:15px}
+  .lb-fig small{display:block;color:var(--muted);font-size:11px}
+  .modal-bg{position:fixed;inset:0;background:rgba(20,40,28,.45);display:none;align-items:flex-start;justify-content:center;padding:40px 16px;z-index:50;overflow:auto}
+  .modal-bg.show{display:flex}
+  .modal{background:#fff;border-radius:16px;width:100%;max-width:560px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+  .modal .mh{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+  .modal .mh h3{margin:0;font-size:16px}
+  .modal .mb{padding:18px 20px}
+  .modal .mf{padding:14px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:9px}
+  .field{margin-bottom:13px}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
+  .field input,.field select,.field textarea{width:100%}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  .calc{background:var(--green-100);border-radius:10px;padding:11px 13px;font-size:12.5px;margin-top:4px}
+  .calc div{display:flex;justify-content:space-between;padding:2px 0}
+  .calc b{font-variant-numeric:tabular-nums}
+  .iconbtn{cursor:pointer;color:var(--muted);padding:3px 6px;border-radius:7px;font-size:13px;border:none;background:none}
+  .iconbtn:hover{background:#eef3ef;color:var(--ink)}
+  .empty{padding:40px;text-align:center;color:var(--muted)}
+  .bartrack{height:9px;border-radius:5px;background:#eef3ef;overflow:hidden;margin-top:6px;display:flex}
+  .hide{display:none!important}
+  @media(max-width:820px){.side{width:60px}.brandsub,.brandfallback,.nav a span.txt,.settings-link .txt,.side .foot{display:none}.brandfull{max-width:40px}.nav a{justify-content:center;padding:12px 0}.settings-link{justify-content:center}.main{padding:16px}}
+  .letterhead-bg{display:none}
+  @media print{
+    @page{size:letter;margin:0}
+    .side,.tools,.topbar,.noprint{display:none!important}
+    .main{padding:0}body{background:#fff}
+    #reportSheet{position:relative;width:8.5in;min-height:11in;margin:0 auto;overflow:hidden}
+    .letterhead-bg{display:block;position:absolute;top:0;left:0;width:8.5in;height:11in;z-index:0}
+    .rep-content{position:relative;z-index:1;padding:1.75in 0.95in 1.5in 0.95in}
+    .ev-rep-logo{display:none}
+    #reportSheet h2{color:#0e5234;font-size:18px}#reportSheet h3{color:#0e5234}
+    .panel{box-shadow:none;border:0;background:transparent}
+    .card{background:rgba(255,255,255,.86);border:1px solid #d7e6dc}
+    .section{margin-top:12px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <img class="brandfull" src="Graphic%20ressources/logos/2_Sin_Fondo.png" alt="Ensenada Verde" onerror="this.style.display='none';document.getElementById('brandtxt').style.display='block'">
+      <div id="brandtxt" class="brandfallback" style="display:none">Ensenada Verde</div>
+      <div class="brandsub">Accounting V4.3.1</div>
+    </div>
+    <nav class="nav" id="nav">
+      <a data-view="dashboard" class="active"><span class="ic">📊</span><span class="txt">Dashboard</span></a>
+      <a data-view="sales"><span class="ic">🧾</span><span class="txt">Sales</span></a>
+      <a data-view="leaderboard"><span class="ic">🏆</span><span class="txt">Leaderboard</span></a>
+      <a data-view="clients"><span class="ic">👥</span><span class="txt">Clients</span></a>
+      <a data-view="products"><span class="ic">📦</span><span class="txt">Products</span></a>
+      <a data-view="sellers"><span class="ic">🧑‍💼</span><span class="txt">Sellers</span></a>
+      <a data-view="packaging"><span class="ic">🏷️</span><span class="txt">Packaging</span></a>
+      <a data-view="settlements"><span class="ic">💸</span><span class="txt">Settlements</span></a>
+      <a data-view="report"><span class="ic">📄</span><span class="txt">Report</span></a>
+    </nav>
+    <a class="settings-link" onclick="settingsModal()"><span class="ic">⚙</span><span class="txt">Settings</span></a>
+    <div class="foot">All data stays on this computer.<br>Export often to back up.</div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1 id="viewTitle">Dashboard</h1>
+        <div class="sub" id="viewSub">Live overview of sales, cash and commissions</div>
+      </div>
+      <div class="tools">
+        <select id="monthFilter"></select>
+        <span id="syncStatus" style="font-size:12px;min-width:90px;text-align:right"></span>
+        <button class="btn" id="btnLang" title="Cambiar idioma / Switch language">ES</button>
+        <button class="btn" id="btnCSV">⬇ CSV</button>
+      </div>
+    </div>
+    <div id="views"></div>
+  </main>
+</div>
+
+<div class="modal-bg" id="modalBg"><div class="modal" id="modal"></div></div>
+<div class="modal-bg" id="modalBg2" style="z-index:60"><div class="modal" id="modal2"></div></div>
+
+<script>
+"use strict";
+/* ============================================================
+   ENSENADA VERDE · ACCOUNTING V4.3.1  (self-contained, offline)
+   Money rules: EV keeps 20% of every sale. Salesperson keeps 20%,
+   taken from the supplier's side. Supplier keeps the remaining 60%.
+   Packaging is paid by EV and tracked per supplier.
+   V4.3: every money movement is tagged with a payment method —
+   cash (moves the drawer) or bank (card/transfer, moves the bank
+   account). New "transfer" movement moves money drawer ↔ bank.
+   V4.3.1: sale window lists only the 10 most-used products (+ add /
+   search-database options) and can register a new client from a
+   stacked pop-out. Products tab = one window per supplier plus an
+   "Old projects" archive; products move between windows via a
+   supplier + archived tag (single DB.products array — history,
+   leaderboards and sync stay intact).
+   ============================================================ */
+const STORE_KEY='ensenadaVerde_v3';
+const EV_RATE=0.20, SELLER_RATE=0.20;   // supplier keeps 0.60
+
+/* Safe storage: falls back to in-memory if localStorage is blocked
+   (e.g. opaque file:// origins, private mode). The app never crashes
+   on startup because of storage. */
+const MEM={};
+function lsGet(k){try{return localStorage.getItem(k);}catch(e){return (k in MEM)?MEM[k]:null;}}
+function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){MEM[k]=String(v);}}
+
+const PAY_STATES={
+  settled:{label:'In cashier',pill:'green'},
+  client_owes:{label:'Client owes',pill:'rust'},
+  seller_holds:{label:'Seller holds',pill:'gold'}
+};
+const PAY_ORDER=['settled','client_owes','seller_holds'];
+/* V4.2: bulk packaging can be fronted by a partner; EV then owes the payer. */
+function pkgPaidBy(e){return e.paidBy||'EV';}
+
+/* V4.3: payment method — cash moves the drawer; bank (card/transfer) moves
+   the bank account. Legacy records without a method count as cash. */
+const METHODS={cash:{label:'Cash',icon:'💵',pill:'gold'},bank:{label:'Bank',icon:'🏦',pill:'sky'}};
+function mth(r){return r&&r.method==='bank'?'bank':'cash';}
+function migrateMethods(d){if(!d)return d;
+  ['sales','settlements','packagingExpenses'].forEach(k=>{(d[k]||[]).forEach(r=>{if(r.method!=='bank'&&r.method!=='cash')r.method='cash';});});
+  /* V4.3.1: products carry archived flag (Old projects window) */
+  (d.products||[]).forEach(p=>{if(typeof p.archived==='undefined')p.archived=false;});
+  return d;}
+/* V4.3.1: product usage ranking for the sale window's short list */
+function productUsage(){const u={};DB.sales.forEach(s=>{if(s.product)u[s.product]=(u[s.product]||0)+1;});return u;}
+function topProducts(n){const u=productUsage();
+  return DB.products.filter(p=>!p.archived)
+    .sort((a,b)=>((u[b.name]||0)-(u[a.name]||0))||sortStr(a.name,b.name)).slice(0,n);}
+function methodToggleHTML(id,cur){cur=cur==='bank'?'bank':'cash';
+  return '<div class="mtoggle" id="'+id+'">'+['cash','bank'].map(k=>
+    '<button type="button" class="mt'+(k===cur?' on':'')+'" data-m="'+k+'" onclick="mtSet(\''+id+'\',\''+k+'\')">'+METHODS[k].icon+' '+trText(METHODS[k].label)+'</button>').join('')+'</div>';}
+function mtSet(id,k){const b=document.getElementById(id);if(!b)return;b.querySelectorAll('.mt').forEach(x=>x.classList.toggle('on',x.dataset.m===k));}
+function mtGet(id){const b=document.getElementById(id);const on=b&&b.querySelector('.mt.on');return on&&on.dataset.m==='bank'?'bank':'cash';}
+function mthPillHTML(r){const m=METHODS[mth(r)];return '<span class="pill '+m.pill+'">'+m.icon+' '+trText(m.label)+'</span>';}
+
+/* ---------- I18N ---------- */
+let LANG=lsGet('ev_lang')||'en';
+const NAV_EN={dashboard:'Dashboard',sales:'Sales',leaderboard:'Leaderboard',clients:'Clients',products:'Products',sellers:'Sellers',packaging:'Packaging',settlements:'Settlements',report:'Report'};
+const NAV_ES={dashboard:'Panel',sales:'Ventas',leaderboard:'Ranking',clients:'Clientes',products:'Productos',sellers:'Vendedores',packaging:'Empaque',settlements:'Liquidaciones',report:'Reporte'};
+const T_TEXT={
+  "Dashboard":"Panel",
+  "In cashier":"En caja","Client owes":"Cliente debe","Seller holds":"Vendedor retiene",
+  "Change status":"Cambiar estado",
+  "Set":"Cambiar",
+  "selected":"seleccionadas",
+  "Apply":"Aplicar",
+  "All":"Todos",
+  "Status":"Estado","Seller":"Vendedor","Supplier":"Proveedor","Client":"Cliente","Product":"Producto",
+  "Newest first":"Recientes primero","Oldest first":"Antiguas primero",
+  "Clear filters":"Limpiar filtros",
+  "Click to change status":"Clic para cambiar estado",
+  "Cash":"Efectivo","Bank":"Banco","Method":"Método",
+  "Sellers":"Vendedores",
+  "Sales crew — add or remove salespeople":"Equipo de ventas — agrega o quita vendedores",
+  "in use":"en uso","removable":"se puede quitar",
+  "Sellers with sales cannot be removed — their history would break.":"Los vendedores con ventas no se pueden quitar — se rompería su historial.",
+  "Sellers and products are managed in their own tabs (left rail).":"Los vendedores y productos se administran en sus propias pestañas (barra izquierda).",
+  "New client":"Nuevo cliente",
+  "old":"antiguo","No matches":"Sin resultados",
+  "Archive":"Archivar","Other":"Otros",
+  "Old projects (archive)":"Proyectos antiguos (archivo)",
+  "No products here yet.":"Aún no hay productos aquí.",
+  "Catalog by supplier, plus archived old projects":"Catálogo por proveedor, más proyectos antiguos archivados",
+  "Move to":"Mover a",
+  "Future sales of this product will credit that supplier (60%). Past sales are not changed.":"Las ventas futuras de este producto acreditarán a ese proveedor (60%). Las ventas pasadas no cambian.",
+  "Moving a product between supplier windows changes who earns the 60% on future sales; past sales keep their original supplier. Archived products stay out of the sale menus but keep their full history.":"Mover un producto entre ventanas de proveedor cambia quién gana el 60% en ventas futuras; las ventas pasadas conservan su proveedor original. Los productos archivados salen de los menús de venta pero conservan todo su historial.",
+  "Payment method":"Método de pago",
+  "Switch payment method":"Cambiar método de pago",
+  "Click to switch cash/bank":"Clic para cambiar efectivo/banco",
+  "Event sale — multiple items":"Venta de evento — varios artículos",
+  "Items sold":"Artículos vendidos",
+  "Add item":"Agregar artículo",
+  "Add at least one item with product, price and quantity":"Agrega al menos un artículo con producto, precio y cantidad",
+  "Add sales":"Agregar ventas",
+  "Paid by":"Pagado por",
+  "paid":"pagó",
+  "Owed to payers":"Se debe a pagadores",
+  "unreimbursed packaging":"empaque sin reembolsar",
+  "Packaging fronted (EV owes the payer)":"Empaque adelantado (EV debe al pagador)",
+  "Payer":"Pagador","Fronted":"Adelantado","Reimbursed":"Reembolsado",
+  "Record reimbursement":"Registrar reembolso",
+  "If a partner paid, EV owes them a reimbursement (see Settlements).":"Si un socio pagó, EV le debe un reembolso (ver Liquidaciones).",
+  "Live overview of sales, cash and commissions":"Vista en vivo de ventas, caja y comisiones",
+  "Leaderboard":"Ranking de vendedores",
+  "Performance, commissions and cash by seller":"Desempeño, comisiones y efectivo por vendedor",
+  "All-time sales":"Ventas históricas",
+  "Commission EV owes":"Comisión que debe EV",
+  "payable to sellers":"por pagar a vendedores",
+  "Cash held by sellers":"Efectivo en manos de vendedores",
+  "owed to EV":"se debe a EV",
+  "This month":"Este mes",
+  "All-time":"Histórico",
+  "sales":"ventas",
+  "comm.":"com.",
+  "Commissions":"Comisiones",
+  "Earned (settled)":"Ganada (en caja)",
+  "Paid out":"Pagado",
+  "EV owes now":"EV debe ahora",
+  "Pending (client owes)":"Pendiente (cliente debe)",
+  "Cash in hands":"Efectivo en manos",
+  "Cash held":"Efectivo retenido",
+  "Owe back to EV":"Debe a EV",
+  "Their commission in it":"Su comisión incluida",
+  "Top products":"Productos top",
+  "No sales yet":"Sin ventas aún",
+  "Avg ticket":"Ticket prom.",
+  "clients":"clientes",
+  "last":"última venta",
+  "Holds":"Retiene",
+  "EV owes":"EV debe",
+  "pending":"pendiente",
+  "Advanced":"Adelanto",
+  "How seller balances work":"Cómo funcionan los saldos",
+  "Select at least one crew member who worked the event":"Selecciona al menos una persona que trabajó el evento",
+  "New seller name":"Nombre del nuevo vendedor",
+  "That seller already exists.":"Ese vendedor ya existe.",
+  "Cannot remove a seller who has sales. Their history would break.":"No se puede eliminar un vendedor con ventas. Se rompería su historial.",
+  "Remove this seller?":"¿Eliminar este vendedor?",
+  "EV owes now = commission on settled sales not yet paid. Cash in hands = full sale cash a seller collected; they keep 20% and owe EV the rest.":"EV debe ahora = comisión de ventas en caja aún no pagada. Efectivo en manos = todo el dinero que el vendedor cobró; conserva su 20% y debe a EV el resto.",
+  "Sales":"Ventas",
+  "Every sale, who sold it, and whether the cash is in":"Cada venta, quién la vendió y si el dinero ya entró",
+  "Leaderboard":"Ranking de vendedores",
+  "Who is selling the most — and what they have earned":"Quién vende más — y cuánto ha ganado",
+  "Clients":"Clientes",
+  "Your relationships and what each one owes":"Tus relaciones y lo que cada uno debe",
+  "Products":"Productos",
+  "Catalog and default prices by supplier":"Catálogo y precios base por proveedor",
+  "Settlements":"Liquidaciones",
+  "Payouts to suppliers & sellers, and cash withdrawals":"Pagos a proveedores y vendedores, y retiros de caja",
+  "All time":"Todo el tiempo",
+  "Packaging":"Empaque",
+  "Bulk packaging costs covered by Ensenada Verde":"Costos de empaque a granel cubiertos por Ensenada Verde",
+  "Report":"Reporte",
+  "Summary by month or custom date range":"Resumen por mes o rango de fechas"
+};
+const ES_PAIRS=[
+  ["+ Event sale</button>","+ Venta de evento</button>"],
+  ["Payment method</label>","Método de pago</label>"],
+  [" sellers</h3>"," vendedores</h3>"],
+  ["🔍 Search product database…</option>","🔍 Buscar en base de productos…</option>"],
+  ["Search product database</label>","Buscar en la base de productos</label>"],
+  ["placeholder=\"type to search…\"","placeholder=\"escribe para buscar…\""],
+  [">Sold (share)</th>",">Vendido (parte)</th>"],
+  [">Pay</th>",">Pago</th>"],
+  [">Method</th>",">Método</th>"],
+  ["Drawer ↔ Bank transfer</option>","Transferencia Caja ↔ Banco</option>"],
+  ["Drawer → Bank (deposit cash)</option>","Caja → Banco (depositar efectivo)</option>"],
+  ["Bank → Drawer (cash out)</option>","Banco → Caja (sacar efectivo)</option>"],
+  [">Direction</label>",">Dirección</label>"],
+  ["Bank account</div>","Cuenta bancaria</div>"],
+  ["physical cash · cash flows only</div>","efectivo físico · solo flujos en efectivo</div>"],
+  ["card + transfers</div>","tarjeta y transferencias</div>"],
+  ["Cash vs Bank (this period)</h3>","Efectivo vs Banco (este periodo)</h3>"],
+  ["Cash received</div>","Efectivo recibido</div>"],["Bank received</div>","Banco recibido</div>"],
+  ["Cash spent</div>","Efectivo gastado</div>"],["Bank spent</div>","Banco gastado</div>"],
+  ["settled sales in cash</div>","ventas en caja, efectivo</div>"],
+  ["payouts + packaging in cash</div>","pagos + empaque en efectivo</div>"],
+  ["payouts + packaging by bank</div>","pagos + empaque por banco</div>"],
+  [">Paid by</label>",">Pagado por</label>"],
+  [">Paid by</th>",">Pagado por</th>"],
+  ["Packaging reimbursement</option>","Reembolso de empaque</option>"],
+  ["Total sales</div>","Ventas totales</div>"],["EV margin (20%)</div>","Margen EV (20%)</div>"],
+  ["Packaging cost</div>","Costo de empaque</div>"],["EV net</div>","Neto EV</div>"],
+  ["In the cashier</div>","En la caja</div>"],["Clients owe</div>","Clientes deben</div>"],
+  ["Sellers holding</div>","Vendedores retienen</div>"],
+  [" sales</div>"," ventas</div>"],["before packaging</div>","antes de empaque</div>"],
+  ["paid by EV</div>","pagado por EV</div>"],["margin − packaging</div>","margen − empaque</div>"],
+  ["actually collected</div>","realmente cobrado</div>"],["not paid yet</div>","aún sin pagar</div>"],
+  ["collected, not handed in</div>","cobrado, no entregado</div>"],["total booked</div>","total registrado</div>"],
+  ["Cash reconciliation <","Conciliación de caja <"],
+  ["— real money vs. money still owed</span>","— dinero real vs. dinero por cobrar</span>"],
+  ["Suppliers — share &amp; packaging used</h2>","Proveedores — participación y empaque usado</h2>"],
+  ["Your income — David &amp; Ricardo (supplier + seller)</h2>","Tu ingreso — David y Ricardo (proveedor + vendedor)</h2>"],
+  ["Supplier net (60%)</th>","Neto proveedor (60%)</th>"],["Packaging used</th>","Empaque usado</th>"],
+  ["EV packaging load</th>","Carga de empaque EV</th>"],[">Owner</th>",">Dueño</th>"],
+  [">Revenue</th>",">Ingresos</th>"],["% of packaging spend</small>","% del gasto en empaque</small>"],
+  [" still pending</span>"," aún pendiente</span>"],[">all realized</div>",">todo cobrado</div>"],
+  [">As supplier (60%)</span>",">Como proveedor (60%)</span>"],[">As seller (20%)</span>",">Como vendedor (20%)</span>"],
+  [">Supplier</th>",">Proveedor</th>"],[">Sales</th>",">Ventas</th>"],[">Date</th>",">Fecha</th>"],[">Time</th>",">Hora</th>"],
+  [">Product</th>",">Producto</th>"],[">Client</th>",">Cliente</th>"],[">Seller</th>",">Vendedor</th>"],
+  [">Qty</th>",">Cant.</th>"],[">Amount</th>",">Monto</th>"],["Seller 20%</th>","Vendedor 20%</th>"],
+  ["Supplier 60%</th>","Proveedor 60%</th>"],[">Pack.</th>",">Emp.</th>"],[">Status</th>",">Estado</th>"],
+  ["+ New sale</button>","+ Nueva venta</button>"],[" sales</h3>"," ventas</h3>"],[" sale</h3>"," venta</h3>"],
+  ["No sales in this period. Click “+ New sale”.","Sin ventas en este periodo. Haz clic en “+ Nueva venta”."],
+  [">In cashier</span>",">En caja</span>"],[">Client owes</span>",">Cliente debe</span>"],[">Seller holds</span>",">Vendedor retiene</span>"],
+  ["Sales ranking</h3>","Ranking de ventas</h3>"],[">commission",">comisión"],[" pending</span>"," pendiente</span>"],
+  [" sales</small>"," ventas</small>"],[" sale</small>"," venta</small>"],
+  ["Commission = 20% of each sale, paid out of the supplier's side. Pending = the sale's cash isn't in the cashier yet.","Comisión = 20% de cada venta, pagada del lado del proveedor. Pendiente = el dinero de la venta aún no está en la caja."],
+  ["+ New client</button>","+ Nuevo cliente</button>"],[" clients</h3>"," clientes</h3>"],
+  [">Channel</th>",">Canal</th>"],[">Location</th>",">Ubicación</th>"],[">Contact</th>",">Contacto</th>"],
+  [">Purchases</th>",">Compras</th>"],["Total spent</th>","Total gastado</th>"],["Owes EV</th>","Debe a EV</th>"],["Last buy</th>","Última compra</th>"],
+  ["+ New product</button>","+ Nuevo producto</button>"],[" products</h3>"," productos</h3>"],
+  ["Default price</th>","Precio base</th>"],[">Unit</th>",">Unidad</th>"],["Units sold</th>","Unidades vendidas</th>"],
+  ["Owed to suppliers</h3>","Adeudado a proveedores</h3>"],["Owed to sellers</h3>","Adeudado a vendedores</h3>"],
+  [">Earned*</th>",">Ganado*</th>"],[">Paid</th>",">Pagado</th>"],[">Balance</th>",">Saldo</th>"],
+  [">Type</th>",">Tipo</th>"],[">Payee</th>",">Beneficiario</th>"],[">Note</th>",">Nota</th>"],
+  ["Record payout</button>","Registrar pago</button>"],["+ Record movement</button>","+ Registrar movimiento</button>"],
+  ["Payout &amp; withdrawal ledger</h3>","Registro de pagos y retiros</h3>"],
+  ["*Earned counts only sales whose cash is already in the cashier (settled). Pending sales are excluded so balances reflect real money.","*Ganado cuenta solo ventas cuyo dinero ya está en la caja. Las ventas pendientes se excluyen para que los saldos reflejen dinero real."],
+  ["No payouts recorded yet.","Aún no hay pagos registrados."],
+  [">New sale</h3>",">Nueva venta</h3>"],[">Edit sale</h3>",">Editar venta</h3>"],
+  [">Date</label>",">Fecha</label>"],[">Time</label>",">Hora</label>"],[">Status</label>",">Estado</label>"],[">Product</label>",">Producto</label>"],
+  [">Salesperson</label>",">Vendedor</label>"],[">Supplier</label>",">Proveedor</label>"],
+  ["Event sale (split commission by hours)","Venta de evento (comisión por horas)"],
+  ["⊕ Add new seller…","⊕ Agregar vendedor…"],
+  [">Sellers</div>",">Vendedores</div>"],["+ Add seller</button>","+ Agregar vendedor</button>"],[">in use<",">en uso<"],
+  [">Event name</label>",">Nombre del evento</label>"],
+  ["Crew &amp; hours worked","Equipo y horas trabajadas"],
+  ["Tip: commission is shared by hours. Leave all hours blank to split evenly.","Tip: la comisión se reparte por horas. Deja todas las horas en blanco para dividir en partes iguales."],
+  ["Unit price (MXN)</label>","Precio unitario (MXN)</label>"],[">Quantity</label>",">Cantidad</label>"],
+  ["Client / channel</label>","Cliente / canal</label>"],
+  ["Packaging cost — paid by EV (MXN)</label>","Costo de empaque — pagado por EV (MXN)</label>"],[">Notes</label>",">Notas</label>"],
+  [">Sale amount</span>",">Monto de venta</span>"],[">Salesperson (20%)</span>",">Vendedor (20%)</span>"],
+  [">Supplier (60%)</span>",">Proveedor (60%)</span>"],["EV net after packaging</span>","Neto EV tras empaque</span>"],
+  [">In cashier</option>",">En caja</option>"],[">Client owes</option>",">Cliente debe</option>"],[">Seller holds</option>",">Vendedor retiene</option>"],
+  [">Cancel</button>",">Cancelar</button>"],[">Add sale</button>",">Agregar venta</button>"],[">Save</button>",">Guardar</button>"],[">Delete</button>",">Eliminar</button>"],
+  [">New client</h3>",">Nuevo cliente</h3>"],[">Edit client</h3>",">Editar cliente</h3>"],[">Name</label>",">Nombre</label>"],
+  [">Channel</label>",">Canal</label>"],[">Location</label>",">Ubicación</label>"],
+  ["Contact (phone / email)</label>","Contacto (teléfono / email)</label>"],["Notes / relationship</label>","Notas / relación</label>"],
+  [">Add client</button>",">Agregar cliente</button>"],
+  [">New product</h3>",">Nuevo producto</h3>"],[">Edit product</h3>",">Editar producto</h3>"],
+  ["Product name</label>","Nombre del producto</label>"],["Default price</label>","Precio base</label>"],
+  [">Unit</label>",">Unidad</label>"],[">Add product</button>",">Agregar producto</button>"],
+  [">Type</label>",">Tipo</label>"],[">Payee</label>",">Beneficiario</label>"],["Amount (MXN)</label>","Monto (MXN)</label>"],
+  [">Note</label>",">Nota</label>"],["Supplier payout</option>","Pago a proveedor</option>"],
+  ["Seller payout</option>","Pago a vendedor</option>"],["Withdrawal / expense</option>","Retiro / gasto</option>"],
+  [">Record</button>",">Registrar</button>"],
+  ["Total packaging</div>","Empaque total</div>"],["Per-sale packaging</div>","Empaque por venta</div>"],
+  ["Bulk packaging</div>","Empaque a granel</div>"],["sale + bulk</div>","venta + granel</div>"],
+  ["entered on sales</div>","capturado en ventas</div>"],["logged here</div>","registrado aquí</div>"],
+  ["Bulk packaging expenses</h3>","Gastos de empaque a granel</h3>"],
+  ["+ Add packaging cost</button>","+ Agregar costo de empaque</button>"],
+  [">For supplier</th>",">Para proveedor</th>"],
+  ["No bulk packaging logged yet. Click “+ Add packaging cost”.","Sin empaque a granel todavía. Haz clic en “+ Agregar costo de empaque”."],
+  [">New packaging cost</h3>",">Nuevo costo de empaque</h3>"],[">Edit packaging cost</h3>",">Editar costo de empaque</h3>"],
+  [">For supplier</label>",">Para proveedor</label>"],["Amount (MXN) — paid by EV</label>","Monto (MXN) — pagado por EV</label>"],
+  ["Note (what was packaged)</label>","Nota (qué se empacó)</label>"],[">Add cost</button>",">Agregar costo</button>"],
+  ["Cash position <","Posición de caja <"],["— running balance, all-time</span>","— saldo corriente, histórico</span>"],
+  ["Cash in drawer</div>","Efectivo en caja</div>"],["Owed out</div>","Por pagar</div>"],
+  ["Fondo + collected − payouts − expenses</div>","Fondo + cobrado − pagos − gastos</div>"],
+  ["suppliers + sellers (in the drawer)</div>","proveedores + vendedores (en la caja)</div>"],
+  ["Fondo de caja / deposit (in)</option>","Fondo de caja / depósito (entra)</option>"],
+  ["Start fresh</button>","Empezar de cero</button>"],["Fondo de caja &amp; reset</b>","Fondo de caja y reinicio</b>"],
+  ["Log opening cash with “+ Fondo de caja” below. Start fresh wipes all transactions to begin at zero.","Registra el fondo inicial con “+ Fondo de caja” abajo. Empezar de cero borra todas las transacciones para iniciar en cero."],
+  ["Ensenada Verde — Report</h2>","Ensenada Verde — Reporte</h2>"],
+  [">From</div>",">Desde</div>"],[">To</div>",">Hasta</div>"],
+  ["This month</button>","Este mes</button>"],["Last month</button>","Mes pasado</button>"],
+  ["This year</button>","Este año</button>"],["All time</button>","Todo el tiempo</button>"],
+  ["🖨 Print / Save PDF</button>","🖨 Imprimir / Guardar PDF</button>"],
+  ["By supplier</h3>","Por proveedor</h3>"],["Seller leaderboard</h3>","Ranking de vendedores</h3>"],
+  ["Cash &amp; receivables (this period)</h3>","Caja y por cobrar (este periodo)</h3>"],
+  ["Net (60%)</th>","Neto (60%)</th>"],["Packaging</th>","Empaque</th>"],
+  [">Sold</th>",">Vendido</th>"],[">Commission</th>",">Comisión</th>"],[">Sales</th>",">Ventas</th>"],
+  ["No sales in this period.</td>","Sin ventas en este periodo.</td>"],
+  ["Collected (settled)</div>","Cobrado (en caja)</div>"],["cash in</div>","entró</div>"],
+  ["receivable</div>","por cobrar</div>"],["not deposited</div>","no depositado</div>"],
+  ["+ Fondo de caja</button>","+ Fondo de caja</button>"],["+ Record movement</button>","+ Registrar movimiento</button>"],
+  ["⚙ Settings</h3>","⚙ Ajustes</h3>"],["Admin PIN (set)</label>","PIN de admin (definido)</label>"],
+  ["Admin PIN (not set)</label>","PIN de admin (sin definir)</label>"],["Save PIN</button>","Guardar PIN</button>"],
+  ["Danger zone</div>","Zona de peligro</div>"],[">Close</button>",">Cerrar</button>"],
+  ["Start fresh deletes all sales, packaging and settlements (keeps products, clients, sellers). Requires the admin PIN.","Empezar de cero borra ventas, empaque y liquidaciones (conserva productos, clientes, vendedores). Requiere el PIN de admin."],
+  ["Start fresh (clear all transactions)</button>","Empezar de cero (borrar transacciones)</button>"],
+  ["Log your opening cash with “+ Fondo de caja” in the ledger below. (To wipe everything and start at zero, open ⚙ Settings in the left rail.)","Registra tu fondo inicial con “+ Fondo de caja” en el registro de abajo. (Para borrar todo y empezar en cero, abre ⚙ Ajustes en la barra izquierda.)"]
+];
+function trText(s){return LANG==='es'?(T_TEXT[s]||s):s;}
+function trHTML(h){if(LANG!=='es')return h;for(const[a,b]of ES_PAIRS)h=h.split(a).join(b);return h;}
+function localize(el){if(el&&LANG==='es')el.innerHTML=trHTML(el.innerHTML);}
+function applyStatic(){
+  document.querySelectorAll('#nav a').forEach(a=>{const v=a.dataset.view;a.querySelector('.txt').textContent=(LANG==='es'?NAV_ES:NAV_EN)[v];});
+  document.querySelector('.side .foot').innerHTML=LANG==='es'
+    ?'Todos los datos quedan en esta computadora.<br>Exporta seguido para respaldar.'
+    :'All data stays on this computer.<br>Export often to back up.';
+  document.getElementById('btnLang').textContent=LANG==='es'?'EN':'ES';
+  const sl=document.querySelector('.settings-link .txt');if(sl)sl.textContent=LANG==='es'?'Ajustes':'Settings';
+}
+
+/* ---------- SEED DATA (from V1, cleaned) ---------- */
+function seed(){
+  return {
+    salespersons:["Ricardo","David","Alicia","Paola","Ky","Chess","Allison"],
+    suppliers:[{name:"Bajafly",person:"David"},{name:"Gamiz",person:"Ricardo"}],
+    products:[
+      {name:"Larva viva premium",supplier:"Bajafly",price:400,unit:"kg"},
+      {name:"Mezcla para aves",supplier:"Bajafly",price:100,unit:"kg"},
+      {name:"Frass",supplier:"Bajafly",price:50,unit:"½ kg"},
+      {name:"Jabón potásico",supplier:"Gamiz",price:200,unit:"galón"},
+      {name:"Lixiviado de lombriz",supplier:"Gamiz",price:60,unit:"litro"},
+      {name:"Tierra de diatomeas",supplier:"Gamiz",price:150,unit:"kg"},
+      {name:"Pie de cría lombriz",supplier:"Gamiz",price:200,unit:"pieza"},
+      {name:"Insumos jardinero",supplier:"Gamiz",price:500,unit:"varios"},
+      {name:"Combo lixiviado/jabón potásico",supplier:"Gamiz",price:100,unit:"combo"}
+    ],
+    clients:[
+      {name:"Vivero Jardín d'Edith",contact:"",location:"Ensenada",channel:"Direct",notes:"Nursery — repeat buyer (jabón, lixiviado, diatomeas)."},
+      {name:"Isaac Rios",contact:"",location:"Ensenada",channel:"Direct",notes:"Bought live larvae."},
+      {name:"Aurora",contact:"",location:"Ensenada",channel:"Direct",notes:"Bird feed mix — payment pending."},
+      {name:"Roberto Carlos Guevara",contact:"",location:"Ensenada",channel:"Direct",notes:"Gardener supplies."},
+      {name:"Facebook",contact:"",location:"",channel:"Facebook",notes:"Walk-in / social channel sales."},
+      {name:"Instagram",contact:"",location:"",channel:"Instagram",notes:"Walk-in / social channel sales."}
+    ],
+    sales:[],
+    settlements:[],
+    packagingExpenses:[],
+    settings:{adminPin:''}
+  };
+}
+function mkSale(date,product,seller,supplier,price,qty,client,state,packaging){
+  return {id:uid(),date,product,seller,supplier,price:+price,qty:+qty,client,state:state||'settled',packaging:+(packaging||0),method:'cash',notes:""};
+}
+function uid(){return 'x'+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-3);}
+
+/* ---------- STATE ---------- */
+/* Sync reconciliation flags — declared BEFORE load() runs so a fresh, seeded
+   device starts "unsynced" and cannot push its seed over real cloud data.
+   _cloudSynced: true once we've reconciled with the cloud, OR we booted with
+   real local data already present. _cloudSavedAt: server stamp of last load. */
+var _cloudSynced=false,_cloudSavedAt='';
+let DB;
+DB=load();   /* split from declaration: keeps DB out of the temporal dead zone
+                while load()->save() run on first launch (empty storage) */
+/* Keep entity lists alphabetical so every dropdown / datalist / picker is sorted.
+   Sales-driven tables (leaderboard, clients, products) re-sort by their own metric. */
+function sortStr(a,b){return String(a==null?'':a).localeCompare(String(b==null?'':b),'es',{sensitivity:'base'});}
+function sortData(d){d=d||DB;if(!d)return d;
+  if(Array.isArray(d.salespersons))d.salespersons.sort(sortStr);
+  if(Array.isArray(d.suppliers))d.suppliers.sort((a,b)=>sortStr(a.name,b.name));
+  if(Array.isArray(d.products))d.products.sort((a,b)=>sortStr(a.name,b.name));
+  if(Array.isArray(d.clients))d.clients.sort((a,b)=>sortStr(a.name,b.name));
+  return d;
+}
+function load(){
+  try{const raw=lsGet(STORE_KEY);if(raw){const d=JSON.parse(raw);if(!d.packagingExpenses)d.packagingExpenses=[];if(!d.settings)d.settings={adminPin:''};migrateMethods(d);
+    /* Shed the old per-device sync config so it stops riding along in the synced DB
+       (endpoint is hardcoded now; identity is auto from device metadata). */
+    if(d.settings){delete d.settings.logUrl;delete d.settings.logToken;delete d.settings.deviceUser;}
+    /* Booted with real local data → known device, safe to push. */
+    _cloudSynced=true;return sortData(d);}}catch(e){}
+  /* First launch (empty storage): seed LOCALLY ONLY. Never push the seed to the
+     cloud — startupSync() pulls real cloud data if any exists. (Pushing the seed
+     here is exactly what wiped the cloud DB on 2026-06-18.) */
+  const s=seed();sortData(s);lsSet(STORE_KEY,JSON.stringify(s));return s;
+}
+function save(d,opts){DB=d||DB;sortData(DB);lsSet(STORE_KEY,JSON.stringify(DB));cloudSave(opts&&opts.allowReset);scheduleBackup();}
+
+/* ============================================================
+   CLOUD SYNC  (Google Apps Script endpoint)
+   Same URL as the audit log. On every save: POST the full DB.
+   On startup: GET ?action=load and refresh if cloud is newer.
+   Falls back to localStorage gracefully when offline.
+   ============================================================ */
+/* ONE hardcoded endpoint — every device/browser syncs + logs here with ZERO setup.
+   (Previously this could be overridden per-device in Settings, and the override was
+   stored in the SYNCED DB — so configuring one device silently changed all of them
+   and left the others pointing nowhere. That option is gone: nothing to configure.) */
+var SYNC_URL='https://script.google.com/macros/s/AKfycbwjP0SZFHQbAWTtH4N46Cbdiw7SkdIyKAn6q9xCioem6_Du-N1d9UVawocog5c5Hlsp/exec';
+function getSyncUrl(){return SYNC_URL;}
+function getSyncToken(){return '';}
+function setSyncStatus(s){
+  var el=document.getElementById('syncStatus'); if(!el)return;
+  var map={
+    idle:'',
+    syncing:'<span style="color:var(--muted)">⏳ Syncing…</span>',
+    saved:'<span style="color:var(--green-600)">☁ Saved</span>',
+    offline:'<span style="color:var(--muted)">📴 Offline</span>',
+    error:'<span style="color:var(--gold)">⚠ Sync error</span>'
+  };
+  el.innerHTML=map[s]||'';
+}
+function cloudSave(allowReset){
+  var url=getSyncUrl(); if(!url)return;
+  /* Don't push until we've reconciled with the cloud at least once (unless this
+     is an explicit reset/import). Stops a just-opened device from overwriting
+     real cloud data before startupSync has had a chance to pull it. */
+  if(!_cloudSynced && !allowReset)return;
+  setSyncStatus('syncing');
+  try{
+    fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'save',db:JSON.stringify(DB),token:getSyncToken(),allowReset:!!allowReset,baseSavedAt:_cloudSavedAt})})
+      .then(function(){setSyncStatus('saved');})
+      .catch(function(){setSyncStatus('offline');});
+  }catch(e){setSyncStatus('offline');}
+}
+/* Timestamped Drive backups. Each data change schedules a snapshot; the timer
+   is debounced so a burst of saves produces ONE file once activity settles.
+   The Apps Script writes EnsenadaVerde_V3_<stamp>.json to the backup folder.
+   Drive never overwrites by name, so no snapshot is ever lost. */
+const BACKUP_DEBOUNCE_MS=4000;
+let _backupTimer=null;
+function stampNow(){const d=new Date(),p=n=>String(n).padStart(2,'0');
+  return ''+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds());}
+function scheduleBackup(){
+  if(!getSyncUrl())return;
+  clearTimeout(_backupTimer);
+  _backupTimer=setTimeout(cloudBackup,BACKUP_DEBOUNCE_MS);
+}
+function cloudBackup(){
+  var url=getSyncUrl(); if(!url)return;
+  if(!_cloudSynced)return;   /* never snapshot a not-yet-reconciled (seed) device */
+  try{
+    fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'backup',db:JSON.stringify(DB),stamp:stampNow(),token:getSyncToken()})})
+      .then(function(){setSyncStatus('saved');})
+      .catch(function(){setSyncStatus('offline');});
+  }catch(e){setSyncStatus('offline');}
+}
+function cloudLoad(cb){
+  var url=getSyncUrl(); if(!url){cb(null);return;}
+  setSyncStatus('syncing');
+  /* JSONP — bypasses CORS entirely; works on all browsers incl. Android Chrome */
+  var cbName='_evLoad'+Date.now();
+  var el=document.createElement('script');
+  var done=false;
+  function cleanup(){done=true;delete window[cbName];try{if(el.parentNode)el.parentNode.removeChild(el);}catch(x){}}
+  window[cbName]=function(d){
+    cleanup();
+    if(d&&d.ok){
+      _cloudSavedAt=d.savedAt||_cloudSavedAt;            /* remember server stamp */
+      _cloudSynced=true;                                 /* we've seen the cloud → safe to push */
+      if(d.db){setSyncStatus('saved');try{cb(JSON.parse(d.db),true);}catch(e){cb(null,true);}}
+      else{setSyncStatus('idle');cb(null,true);}          /* cloud reachable but empty */
+    }else{setSyncStatus(d?'error':'offline');cb(null,false);}
+  };
+  el.onerror=function(){cleanup();setSyncStatus('offline');cb(null,false);};
+  var sep=url.indexOf('?')>=0?'&':'?';
+  el.src=url+sep+'action=load&callback='+cbName+'&token='+encodeURIComponent(getSyncToken());
+  document.head.appendChild(el);
+  /* 30-second safety timeout — GAS cold starts can take 10-15s on mobile networks */
+  setTimeout(function(){if(!done){cleanup();setSyncStatus('offline');cb(null,false);}},30000);
+}
+function startupSync(){
+  /* Retry up to 2 times — handles GAS cold-start timeout on slow mobile connections */
+  function attempt(retriesLeft){
+    cloudLoad(function(remote,reachable){
+      if(remote){
+        DB=migrateMethods(remote);
+        lsSet(STORE_KEY,JSON.stringify(DB));
+        _cloudSynced=true;          /* reconciled — pushes are now safe */
+        currentMonth='ALL';
+        render();
+      } else if(reachable){
+        _cloudSynced=true;          /* cloud reachable but empty (first-ever use) */
+      } else if(retriesLeft>0){
+        setSyncStatus('syncing');
+        setTimeout(function(){attempt(retriesLeft-1);},3000);
+      } else {
+        /* Offline after retries. We never reached the cloud, so we can't have
+           clobbered it; allow local saves to push once connectivity returns. */
+        _cloudSynced=true;
+      }
+    });
+  }
+  attempt(2);
+}
+
+/* ---------- MONEY ENGINE ---------- */
+function amount(s){return +(s.price*s.qty);}
+function split(s){
+  const amt=amount(s),ev=amt*EV_RATE,seller=amt*SELLER_RATE,supplier=amt-ev-seller;
+  return {amt,ev,seller,supplier,packaging:+(s.packaging||0),evNet:ev-(s.packaging||0)};
+}
+/* Event sales: no single seller. The 20% seller commission is split among the
+   crew that staffed the event, weighted by hours. sellerShares() returns the
+   per-seller weight (summing to 1) for ANY sale, so every per-seller rollup
+   (leaderboard, settlements, report, income cards) can treat events uniformly. */
+function isEventSale(s){return !!(s.crew&&s.crew.length);}
+function sellerShares(s){
+  if(isEventSale(s)){
+    const tot=s.crew.reduce((a,c)=>a+(+c.hours||0),0);
+    if(tot>0)return s.crew.map(c=>({seller:c.seller,w:(+c.hours||0)/tot}));
+    return s.crew.map(c=>({seller:c.seller,w:1/s.crew.length}));   // no hours → equal split
+  }
+  return s.seller?[{seller:s.seller,w:1}]:[];
+}
+function sellerCellHTML(s){
+  if(isEventSale(s)){
+    const tip=(s.crew||[]).map(c=>esc(c.seller)+' '+(+c.hours||0)+'h').join(', ');
+    return '<span class="pill gold" title="'+tip+'">🎪 '+esc(s.eventName||'Event')+'</span>';
+  }
+  return esc(s.seller||'—');
+}
+const MX=n=>'$'+(Math.round((n+Number.EPSILON)*100)/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const MX0=n=>'$'+Math.round(n).toLocaleString('en-US');
+function monthKey(d){return (d||'').slice(0,7);}
+function fmtDate(d){if(!d)return'—';const p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0].slice(2);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function today(){return new Date().toISOString().slice(0,10);}
+function nowTime(){const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');}
+/* V4.3: timestamps to the second. Normalizes 'HH:MM' (older records / some
+   browsers' time inputs) to 'HH:MM:SS' so same-day events keep logging order. */
+function timeFull(t){t=(t||nowTime());return t.length===5?t+':00':t;}
+function tsOf(r){return r.ts||((r.date||'')+'T00:00');}
+function fmtTime(r){return r.ts?r.ts.slice(11,19):'—';}
+function saleSortKey(s){return s.ts||((s.date||'')+'T00:00');}
+
+/* ---------- FILTER ---------- */
+let currentMonth='ALL', currentView='dashboard';
+function salesInScope(){return currentMonth==='ALL'?DB.sales:DB.sales.filter(s=>monthKey(s.date)===currentMonth);}
+
+/* ============================================================ RENDER ============================================================ */
+const views=document.getElementById('views');
+function render(){
+  sortData();
+  rebuildMonthFilter();
+  ({dashboard:renderDashboard,sales:renderSales,leaderboard:renderLeaderboard,clients:renderClients,products:renderProducts,sellers:renderSellers,packaging:renderPackaging,settlements:renderSettlements,report:renderReport}[currentView])();
+  localize(views);
+}
+function rebuildMonthFilter(){
+  const sel=document.getElementById('monthFilter');
+  const loc=LANG==='es'?'es-MX':'en-US';
+  const months=[...new Set([...DB.sales.map(s=>monthKey(s.date)),...(DB.packagingExpenses||[]).map(e=>monthKey(e.date))].filter(Boolean))].sort().reverse();
+  sel.innerHTML=['<option value="ALL">'+trText('All time')+'</option>'].concat(months.map(m=>{
+    const lbl=new Date(m+'-01T00:00').toLocaleString(loc,{month:'long',year:'numeric'});
+    return '<option value="'+m+'">'+lbl+'</option>';
+  })).join('');
+  sel.value=currentMonth;
+}
+function setTitle(t,s){document.getElementById('viewTitle').textContent=trText(t);document.getElementById('viewSub').textContent=trText(s);}
+function kpi(label,val,hint,cls,icon){
+  return '<div class="card kpi '+(cls||'')+'"><div class="label">'+(icon?icon+' ':'')+label+'</div><div class="val">'+val+'</div><div class="hint">'+(hint||'')+'</div></div>';
+}
+
+/* ---------- DASHBOARD ---------- */
+function renderDashboard(){
+  setTitle('Dashboard','Live overview of sales, cash and commissions');
+  const S=salesInScope();
+  const tot=S.reduce((a,s)=>a+amount(s),0);
+  let ev=0,salePack=0,cashIn=0,clientOwes=0,sellerHolds=0;
+  S.forEach(s=>{const x=split(s);ev+=x.ev;salePack+=x.packaging;
+    if(s.state==='settled')cashIn+=x.amt;else if(s.state==='client_owes')clientOwes+=x.amt;else sellerHolds+=x.amt;});
+  const bulkList=(DB.packagingExpenses||[]).filter(e=>currentMonth==='ALL'||monthKey(e.date)===currentMonth);
+  const bulkPack=bulkList.reduce((a,e)=>a+(+e.amount||0),0);
+  const pack=salePack+bulkPack;          // total packaging = per-sale + bulk
+  const evNet=ev-pack;
+  const sup={};DB.suppliers.forEach(su=>sup[su.name]={rev:0,net:0,pack:0,n:0});
+  S.forEach(s=>{const x=split(s);if(!sup[s.supplier])sup[s.supplier]={rev:0,net:0,pack:0,n:0};
+    sup[s.supplier].rev+=x.amt;sup[s.supplier].net+=x.supplier;sup[s.supplier].pack+=x.packaging;sup[s.supplier].n++;});
+  bulkList.forEach(e=>{if(sup[e.supplier])sup[e.supplier].pack+=(+e.amount||0);});
+  /* ---- all-time cash position (running physical balance; ignores the month filter) ---- */
+  const settledAll=DB.sales.filter(s=>s.state==='settled');
+  const collectedAll=settledAll.reduce((a,s)=>a+amount(s),0);
+  /* V4.3: every flow is split by method — cash moves the drawer, bank moves the account. */
+  let colCash=0,colBank=0;settledAll.forEach(s=>{const a2=amount(s);if(mth(s)==='bank')colBank+=a2;else colCash+=a2;});
+  let supPaidAll=0,selPaidAll=0,reimbAll=0;
+  let fondoCash=0,fondoBank=0,outCash=0,outBank=0,trToBank=0,trToDrawer=0;
+  (DB.settlements||[]).forEach(p=>{const a2=+p.amount||0;
+    if(p.type==='transfer'){if(p.direction==='to_drawer')trToDrawer+=a2;else trToBank+=a2;return;}
+    if(p.type==='supplier')supPaidAll+=a2;else if(p.type==='seller')selPaidAll+=a2;else if(p.type==='reimbursement')reimbAll+=a2;
+    if(p.type==='deposit'){if(mth(p)==='bank')fondoBank+=a2;else fondoCash+=a2;}
+    else{if(mth(p)==='bank')outBank+=a2;else outCash+=a2;}});
+  /* Only EV-paid packaging leaves a balance at purchase time; partner-fronted
+     packaging leaves when its reimbursement is recorded. Per-sale packaging
+     is treated as cash from the drawer. */
+  const salePackAll=DB.sales.reduce((a,s)=>a+(+s.packaging||0),0);
+  let bulkPkgCash=0,bulkPkgBank=0;
+  (DB.packagingExpenses||[]).forEach(e=>{if(pkgPaidBy(e)!=='EV')return;if(mth(e)==='bank')bulkPkgBank+=(+e.amount||0);else bulkPkgCash+=(+e.amount||0);});
+  const frontedAll=(DB.packagingExpenses||[]).reduce((a,e)=>a+(pkgPaidBy(e)!=='EV'?(+e.amount||0):0),0);
+  const drawer=fondoCash+colCash-outCash-salePackAll-bulkPkgCash-trToBank+trToDrawer;
+  const bank=fondoBank+colBank-outBank-bulkPkgBank+trToBank-trToDrawer;
+  let supEarnAll=0,selEarnAll=0;settledAll.forEach(s=>{const x=split(s);supEarnAll+=x.supplier;selEarnAll+=x.seller;});
+  const owedOut=Math.max(0,supEarnAll-supPaidAll)+Math.max(0,selEarnAll-selPaidAll)+Math.max(0,frontedAll-reimbAll);
+  const clientOwesAll=DB.sales.filter(s=>s.state==='client_owes').reduce((a,s)=>a+amount(s),0);
+  const sellerHoldsAll=DB.sales.filter(s=>s.state==='seller_holds').reduce((a,s)=>a+amount(s),0);
+  views.innerHTML=
+    '<div class="grid cards">'+
+      kpi('Total sales',MX0(tot),S.length+' sales','accent','💰')+
+      kpi('EV margin (20%)',MX0(ev),'before packaging','','🏪')+
+      kpi('Packaging cost',MX0(pack),'paid by EV','warn','📦')+
+      kpi('EV net',MX0(evNet),'margin − packaging',evNet>=0?'accent':'bad','✅')+
+    '</div>'+
+    '<div class="section"><h2>💵 Cash position <span class="muted" style="font-weight:400;font-size:12px">— running balance, all-time</span></h2>'+
+      '<div class="grid cards">'+
+        kpi('Cash in drawer',MX0(drawer),'physical cash · cash flows only',drawer>=0?'accent':'bad','🔒')+
+        kpi('Bank account',MX0(bank),'card + transfers',bank>=0?'accent':'bad','🏦')+
+        kpi('Owed out',MX0(owedOut),'suppliers + sellers (in the drawer)',owedOut>0?'warn':'','📤')+
+        kpi('Clients owe',MX0(clientOwesAll),'not paid yet',clientOwesAll>0?'bad':'','⏳')+
+        kpi('Sellers holding',MX0(sellerHoldsAll),'collected, not handed in',sellerHoldsAll>0?'warn':'','🤝')+
+      '</div></div>'+
+    '<div class="section"><h2>🏭 Suppliers — share & packaging used</h2>'+
+      '<div class="panel"><div class="pb"><div class="tablewrap"><table><thead><tr>'+
+      '<th>Supplier</th><th>Owner</th><th class="num">Sales</th><th class="num">Revenue</th>'+
+      '<th class="num">Supplier net (60%)</th><th class="num">Packaging used</th><th style="width:160px">EV packaging load</th>'+
+      '</tr></thead><tbody>'+
+      DB.suppliers.map(su=>{const d=sup[su.name];const share=pack>0?(d.pack/pack*100):0;
+        return '<tr><td><b>'+esc(su.name)+'</b></td><td class="muted">'+esc(su.person)+'</td>'+
+        '<td class="num">'+d.n+'</td><td class="num">'+MX(d.rev)+'</td>'+
+        '<td class="num">'+MX(d.net)+'</td><td class="num">'+MX(d.pack)+'</td>'+
+        '<td><div class="bartrack"><i style="width:'+share+'%;background:'+(su.name==='Bajafly'?'var(--leaf)':'var(--sky)')+'"></i></div>'+
+        '<small class="muted">'+share.toFixed(0)+'% of packaging spend</small></td></tr>';}).join('')+
+      '</tbody></table></div></div></div></div>'+
+    '<div class="section"><h2>👤 Your income — David & Ricardo (supplier + seller)</h2>'+
+      '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">'+
+      incomeCard('David','Bajafly',S)+incomeCard('Ricardo','Gamiz',S)+
+      '</div></div>';
+}
+function incomeCard(person,supplierName,S){
+  let sellerInc=0,supInc=0,pend=0;
+  S.forEach(s=>{const x=split(s);const realized=s.state==='settled';
+    const sh=sellerShares(s).find(z=>z.seller===person);
+    if(sh){sellerInc+=x.seller*sh.w;if(!realized)pend+=x.seller*sh.w;}
+    if(s.supplier===supplierName){supInc+=x.supplier;if(!realized)pend+=x.supplier;}});
+  const total=sellerInc+supInc;
+  return '<div class="card"><div class="kpi"><div class="label">'+esc(person)+' <span class="pill grey">'+esc(supplierName)+'</span></div>'+
+    '<div class="val" style="color:var(--green-700)">'+MX0(total)+'</div>'+
+    '<div class="hint">'+(pend>0?'<span style="color:var(--gold)">'+MX0(pend)+' still pending</span>':'all realized')+'</div></div>'+
+    '<div class="calc" style="margin-top:11px"><div><span>As supplier (60%)</span><b>'+MX(supInc)+'</b></div>'+
+    '<div><span>As seller (20%)</span><b>'+MX(sellerInc)+'</b></div></div></div>';
+}
+
+/* ---------- SALES ---------- */
+/* V4.2: header filters + chronological sale # + sort, inline & batch status
+   toggle, and a dedicated multi-item event-sale entry window. */
+let SALES_FILTER={state:'',seller:'',supplier:'',client:'',product:'',method:''};
+let SALES_SORT='desc';
+function setSalesFilter(k,v){SALES_FILTER[k]=v;render();}
+function setSalesSort(v){SALES_SORT=v;render();}
+function clearSalesFilters(){SALES_FILTER={state:'',seller:'',supplier:'',client:'',product:'',method:''};render();}
+function stateLabel(k){return trText(PAY_STATES[k].label);}
+function selAllSales(on){document.querySelectorAll('.salesel').forEach(c=>{c.checked=on;});updateSelCount();}
+function updateSelCount(){
+  const n=document.querySelectorAll('.salesel:checked').length;
+  const b=document.getElementById('batchBar');if(b)b.style.display=n?'flex':'none';
+  const c=document.getElementById('selCount');if(c)c.textContent=n;
+}
+function cycleState(id){
+  const s=DB.sales.find(x=>x.id===id);if(!s)return;
+  const next=PAY_ORDER[(PAY_ORDER.indexOf(s.state)+1)%PAY_ORDER.length];
+  if(!confirm(trText('Change status')+': '+stateLabel(s.state)+' → '+stateLabel(next)+'?'))return;
+  const from=s.state;s.state=next;
+  if(window.logEvent)logEvent('sale_state_change',{id:s.id,product:s.product,client:s.client,from:from,to:next});
+  save();render();
+}
+function cycleMethod(id){
+  const s=DB.sales.find(x=>x.id===id);if(!s)return;
+  const next=mth(s)==='cash'?'bank':'cash';
+  if(!confirm(trText('Switch payment method')+': '+trText(METHODS[mth(s)].label)+' → '+trText(METHODS[next].label)+'?'))return;
+  s.method=next;
+  if(window.logEvent)logEvent('sale_method_change',{id:s.id,product:s.product,client:s.client,to:next});
+  save();render();
+}
+function batchState(){
+  const ids=[...document.querySelectorAll('.salesel:checked')].map(c=>c.dataset.id);
+  if(!ids.length)return;
+  const st=document.getElementById('batchStateSel').value;
+  if(!confirm(trText('Set')+' '+ids.length+' '+trText('sales')+' → '+stateLabel(st)+'?'))return;
+  DB.sales.forEach(s=>{if(ids.indexOf(s.id)>=0)s.state=st;});
+  if(window.logEvent)logEvent('sale_state_batch',{ids:ids,to:st,count:ids.length});
+  save();render();
+}
+function renderSales(){
+  setTitle('Sales','Every sale, who sold it, and whether the cash is in');
+  /* chronological numbering over ALL sales (1 = oldest, stable per sale) */
+  const chron=[...DB.sales].sort((a,b)=>saleSortKey(a).localeCompare(saleSortKey(b)));
+  const NUM={};chron.forEach((s,i)=>{NUM[s.id]=i+1;});
+  const F=SALES_FILTER;
+  let S=[...salesInScope()];
+  if(F.state)S=S.filter(s=>s.state===F.state);
+  if(F.seller)S=S.filter(s=>sellerShares(s).some(z=>z.seller===F.seller));
+  if(F.supplier)S=S.filter(s=>s.supplier===F.supplier);
+  if(F.client)S=S.filter(s=>s.client===F.client);
+  if(F.product)S=S.filter(s=>s.product===F.product);
+  if(F.method)S=S.filter(s=>mth(s)===F.method);
+  S.sort((a,b)=>SALES_SORT==='asc'?NUM[a.id]-NUM[b.id]:NUM[b.id]-NUM[a.id]);
+  const anyF=F.state||F.seller||F.supplier||F.client||F.product||F.method;
+  const opt=(v,cur,lbl)=>'<option value="'+esc(v)+'"'+(v===cur?' selected':'')+'>'+esc(lbl)+'</option>';
+  const fsel=(key,label,vals,labels)=>'<select onchange="setSalesFilter(\''+key+'\',this.value)" title="'+esc(label)+'" style="max-width:150px">'+
+    opt('',F[key],label+': '+trText('All'))+vals.map((v,i)=>opt(v,F[key],labels?labels[i]:v)).join('')+'</select>';
+  const clientNames=[...new Set(DB.sales.map(s=>s.client).filter(Boolean))].sort(sortStr);
+  const filterBar=
+    '<div class="noprint" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line);background:#fafdfb">'+
+    fsel('state',trText('Status'),Object.keys(PAY_STATES),Object.keys(PAY_STATES).map(k=>stateLabel(k)))+
+    fsel('seller',trText('Seller'),DB.salespersons)+
+    fsel('supplier',trText('Supplier'),DB.suppliers.map(su=>su.name))+
+    fsel('client',trText('Client'),clientNames)+
+    fsel('product',trText('Product'),DB.products.map(p=>p.name))+
+    fsel('method',trText('Method'),['cash','bank'],[trText('Cash'),trText('Bank')])+
+    '<select onchange="setSalesSort(this.value)">'+opt('desc',SALES_SORT,'# '+trText('Newest first'))+opt('asc',SALES_SORT,'# '+trText('Oldest first'))+'</select>'+
+    (anyF?'<button class="btn sm" onclick="clearSalesFilters()">✕ '+trText('Clear filters')+'</button>':'')+
+    '</div>'+
+    '<div id="batchBar" class="noprint" style="display:none;gap:8px;flex-wrap:wrap;align-items:center;padding:9px 16px;border-bottom:1px solid var(--line);background:#fbf0d8">'+
+    '<b><span id="selCount">0</span> '+trText('selected')+'</b>'+
+    '<select id="batchStateSel">'+PAY_ORDER.map(k=>'<option value="'+k+'">'+stateLabel(k)+'</option>').join('')+'</select>'+
+    '<button class="btn sm primary" onclick="batchState()">'+trText('Apply')+'</button>'+
+    '</div>';
+  views.innerHTML=
+    '<div class="panel"><div class="ph"><h3>'+S.length+(anyF?' / '+salesInScope().length:'')+' sale'+(S.length!==1?'s':'')+'</h3>'+
+    '<div style="display:flex;gap:6px"><button class="btn" onclick="eventSaleModal()">🎪 + Event sale</button>'+
+    '<button class="btn primary" onclick="saleModal()">+ New sale</button></div></div>'+
+    filterBar+
+    '<div class="pb"><div class="tablewrap"><table><thead><tr>'+
+    '<th class="noprint" style="width:28px"><input type="checkbox" onchange="selAllSales(this.checked)"></th>'+
+    '<th class="num">#</th>'+
+    '<th>Date</th><th>Time</th><th>Product</th><th>Client</th><th>Seller</th><th>Supplier</th>'+
+    '<th class="num">Qty</th><th class="num">Amount</th><th class="num">EV 20%</th>'+
+    '<th class="num">Seller 20%</th><th class="num">Supplier 60%</th><th class="num">Pack.</th><th>Status</th><th>Pay</th><th></th>'+
+    '</tr></thead><tbody>'+
+    (S.length?S.map(s=>{const x=split(s);const ps=PAY_STATES[s.state];
+      return '<tr><td class="noprint"><input type="checkbox" class="salesel" data-id="'+s.id+'" onchange="updateSelCount()"></td>'+
+      '<td class="num muted">'+(NUM[s.id]||'—')+'</td>'+
+      '<td>'+fmtDate(s.date)+'</td><td class="muted" style="white-space:nowrap">'+fmtTime(s)+'</td><td><b>'+esc(s.product)+'</b></td><td>'+esc(s.client)+'</td>'+
+      '<td>'+sellerCellHTML(s)+'</td><td><span class="pill '+(s.supplier==='Bajafly'?'green':'sky')+'">'+esc(s.supplier)+'</span></td>'+
+      '<td class="num">'+s.qty+'</td><td class="num"><b>'+MX(x.amt)+'</b></td>'+
+      '<td class="num">'+MX(x.ev)+'</td><td class="num">'+MX(x.seller)+'</td><td class="num">'+MX(x.supplier)+'</td>'+
+      '<td class="num">'+(s.packaging?MX(x.packaging):'—')+'</td>'+
+      '<td><span class="pill '+ps.pill+'" style="cursor:pointer" title="'+trText('Click to change status')+'" onclick="cycleState(\''+s.id+'\')">'+ps.label+'</span></td>'+
+      '<td><span class="pill '+METHODS[mth(s)].pill+'" style="cursor:pointer" title="'+trText('Click to switch cash/bank')+'" onclick="cycleMethod(\''+s.id+'\')">'+METHODS[mth(s)].icon+' '+trText(METHODS[mth(s)].label)+'</span></td>'+
+      '<td><button class="iconbtn" onclick="saleModal(\''+s.id+'\')">✏️</button>'+
+      '<button class="iconbtn" onclick="delSale(\''+s.id+'\')">🗑</button></td></tr>';}).join('')
+      :'<tr><td colspan="17" class="empty">No sales in this period. Click “+ New sale”.</td></tr>')+
+    '</tbody></table></div></div></div>';
+}
+
+/* ---------- LEADERBOARD ---------- */
+function renderLeaderboard(){
+  setTitle('Leaderboard','Performance, commissions and cash by seller');
+  const L=s=>trText(s);
+  const loc=LANG==='es'?'es-MX':'en-US';
+  const selMonth=currentMonth==='ALL'?today().slice(0,7):currentMonth;
+  let monLbl=new Date(selMonth+'-01T00:00').toLocaleString(loc,{month:'long',year:'numeric'});
+  monLbl=monLbl.charAt(0).toUpperCase()+monLbl.slice(1);
+  /* commission already paid out to each seller (settlement ledger) */
+  const paidSeller={};DB.salespersons.forEach(n=>paidSeller[n]=0);
+  DB.settlements.forEach(p=>{if(p.type==='seller')paidSeller[p.payee]=(paidSeller[p.payee]||0)+(+p.amount||0);});
+  /* per-seller accumulator; event sales are distributed across the crew by hours */
+  const stat={};DB.salespersons.forEach(n=>stat[n]={name:n,allSold:0,allComm:0,allN:0,pSold:0,pComm:0,pN:0,
+    commSettled:0,commPending:0,heldFull:0,heldComm:0,recvClient:0,prod:{},clients:new Set(),lastDate:'',lastTs:''});
+  DB.sales.forEach(s=>{const x=split(s);const inP=monthKey(s.date)===selMonth;const k=saleSortKey(s);
+    sellerShares(s).forEach(sh=>{const d=stat[sh.seller];if(!d)return;const w=sh.w;
+      d.allSold+=x.amt*w;d.allComm+=x.seller*w;d.allN++;
+      if(inP){d.pSold+=x.amt*w;d.pComm+=x.seller*w;d.pN++;}
+      if(s.state==='settled')d.commSettled+=x.seller*w;
+      else if(s.state==='client_owes'){d.commPending+=x.seller*w;d.recvClient+=x.amt*w;}
+      else if(s.state==='seller_holds'){d.heldFull+=x.amt*w;d.heldComm+=x.seller*w;}
+      if(s.product)d.prod[s.product]=(d.prod[s.product]||0)+(+s.qty||0)*w;
+      if(s.client)d.clients.add(s.client);
+      if(k>d.lastTs){d.lastTs=k;d.lastDate=s.date;}});});
+  const data=DB.salespersons.map(name=>{const d=stat[name];const paid=paidSeller[name]||0;
+    return {name:d.name,allSold:d.allSold,allComm:d.allComm,allN:d.allN,pSold:d.pSold,pComm:d.pComm,pN:d.pN,
+      commSettled:d.commSettled,commPending:d.commPending,paid,owedByEV:d.commSettled-paid,
+      heldFull:d.heldFull,heldComm:d.heldComm,heldOwedToEV:d.heldFull-d.heldComm,recvClient:d.recvClient,
+      top3:Object.entries(d.prod).sort((a,b)=>b[1]-a[1]).slice(0,3).map(p=>[p[0],Math.round(p[1]*100)/100]),
+      avg:d.allN?d.allSold/d.allN:0,clients:d.clients.size,lastDate:d.lastDate};
+  });
+  const ranked=[...data].sort((a,b)=>b.allSold-a.allSold);
+  const sum=f=>data.reduce((a,d)=>a+f(d),0);
+  const maxSold=Math.max(1,...data.map(d=>d.allSold));
+  const totalOwed=data.reduce((a,d)=>a+Math.max(0,d.owedByEV),0);
+  const totalHeld=sum(d=>d.heldFull),totalHeldEV=sum(d=>d.heldOwedToEV);
+  /* KPI sales counts use real sale rows (not per-seller participation) */
+  const periodSold=DB.sales.filter(s=>monthKey(s.date)===selMonth).reduce((a,s)=>a+amount(s),0);
+  const periodN=DB.sales.filter(s=>monthKey(s.date)===selMonth).length;
+  const allSoldT=DB.sales.reduce((a,s)=>a+amount(s),0),allNT=DB.sales.length;
+  const card=(d,i)=>{
+    const rk=i+1;const pills=[];
+    if(d.allN===0)pills.push('<span class="pill grey">'+L('No sales yet')+'</span>');
+    if(d.heldFull>0.005)pills.push('<span class="pill gold">💰 '+L('Holds')+' '+MX0(d.heldFull)+'</span>');
+    if(d.owedByEV>0.005)pills.push('<span class="pill green">'+L('EV owes')+' '+MX0(d.owedByEV)+'</span>');
+    else if(d.owedByEV<-0.005)pills.push('<span class="pill sky">'+L('Advanced')+' '+MX0(-d.owedByEV)+'</span>');
+    if(d.commPending>0.005)pills.push('<span class="pill rust">'+MX0(d.commPending)+' '+L('pending')+'</span>');
+    const top=d.top3.length?d.top3.map(p=>'<div class="sd-prod"><span>'+esc(p[0])+'</span><b>'+p[1]+'</b></div>').join(''):'<div class="sd-prod muted">—</div>';
+    return '<div class="sd-card'+(d.allN===0?' sd-dim':'')+'">'+
+      '<div class="sd-head"><div class="sd-rank '+(rk<=3?'r'+rk:'')+'">'+rk+'</div><div class="sd-name">'+esc(d.name)+'</div></div>'+
+      (d.allN?'<div class="sd-bar"><i style="width:'+Math.max(2,d.allSold/maxSold*100)+'%"></i></div>':'')+
+      (pills.length?'<div class="sd-pills">'+pills.join('')+'</div>':'')+
+      '<div class="sd-twin">'+
+        '<div class="sd-box"><div class="t">'+esc(monLbl)+'</div><div class="v">'+MX0(d.pSold)+'</div><div class="s">'+d.pN+' '+L('sales')+' · '+MX0(d.pComm)+' '+L('comm.')+'</div></div>'+
+        '<div class="sd-box"><div class="t">'+L('All-time')+'</div><div class="v">'+MX0(d.allSold)+'</div><div class="s">'+d.allN+' '+L('sales')+' · '+MX0(d.allComm)+' '+L('comm.')+'</div></div>'+
+      '</div>'+
+      '<div class="sd-sec">'+L('Commissions')+'</div><div class="sd-rows">'+
+        '<div class="sd-row"><span>'+L('Earned (settled)')+'</span><b>'+MX(d.commSettled)+'</b></div>'+
+        '<div class="sd-row"><span>'+L('Paid out')+'</span><b>'+MX(d.paid)+'</b></div>'+
+        '<div class="sd-row"><span>'+L('EV owes now')+'</span><b style="color:'+(d.owedByEV>0.005?'var(--green-700)':'inherit')+'">'+MX(d.owedByEV)+'</b></div>'+
+        (d.commPending>0.005?'<div class="sd-row"><span>'+L('Pending (client owes)')+'</span><b style="color:var(--rust)">'+MX(d.commPending)+'</b></div>':'')+
+      '</div>'+
+      (d.heldFull>0.005?'<div class="sd-sec">'+L('Cash in hands')+'</div><div class="sd-rows">'+
+        '<div class="sd-row"><span>'+L('Cash held')+'</span><b>'+MX(d.heldFull)+'</b></div>'+
+        '<div class="sd-row"><span>'+L('Owe back to EV')+'</span><b style="color:var(--gold)">'+MX(d.heldOwedToEV)+'</b></div>'+
+        '<div class="sd-row"><span>'+L('Their commission in it')+'</span><b>'+MX(d.heldComm)+'</b></div>'+
+      '</div>':'')+
+      '<div class="sd-sec">'+L('Top products')+'</div><div class="sd-rows">'+top+'</div>'+
+      '<div class="sd-foot"><span>'+L('Avg ticket')+' '+MX0(d.avg)+'</span><span>'+d.clients+' '+L('clients')+'</span><span>'+L('last')+' '+(d.lastDate?fmtDate(d.lastDate):'—')+'</span></div>'+
+    '</div>';
+  };
+  views.innerHTML=
+    '<style>'+
+    '.sd-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px;margin-top:14px}'+
+    '.sd-card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px 15px;display:flex;flex-direction:column;gap:10px}'+
+    '.sd-card.sd-dim{opacity:.55}'+
+    '.sd-head{display:flex;align-items:center;gap:10px}'+
+    '.sd-rank{width:30px;height:30px;border-radius:9px;background:var(--green-100);color:var(--green-700);font-weight:700;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}'+
+    '.sd-rank.r1{background:#fbe7bf;color:#8a6400}.sd-rank.r2{background:#e7e9eb;color:#5a6168}.sd-rank.r3{background:#f0ddcf;color:#8a4b25}'+
+    '.sd-name{font-weight:700;font-size:15px;flex:1}'+
+    '.sd-bar{height:6px;background:var(--green-100);border-radius:6px;overflow:hidden}'+
+    '.sd-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--green-500),var(--green-600))}'+
+    '.sd-pills{display:flex;gap:5px;flex-wrap:wrap}'+
+    '.sd-twin{display:grid;grid-template-columns:1fr 1fr;gap:8px}'+
+    '.sd-box{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg)}'+
+    '.sd-box .t{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'+
+    '.sd-box .v{font-size:18px;font-weight:700;margin-top:2px;letter-spacing:-.3px}'+
+    '.sd-box .s{font-size:11px;color:var(--muted);margin-top:1px}'+
+    '.sd-sec{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:700;border-top:1px solid var(--line);padding-top:8px}'+
+    '.sd-rows{display:flex;flex-direction:column;gap:4px;font-size:12.5px}'+
+    '.sd-row{display:flex;justify-content:space-between;gap:8px}.sd-row span{color:var(--muted)}'+
+    '.sd-prod{display:flex;justify-content:space-between;gap:8px;font-size:12.5px}.sd-prod.muted{color:var(--muted)}'+
+    '.sd-foot{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--muted);border-top:1px solid var(--line);padding-top:8px;flex-wrap:wrap}'+
+    '</style>'+
+    '<div class="grid cards">'+
+      kpi(esc(monLbl),MX0(periodSold),periodN+' '+L('sales'),'accent','📅')+
+      kpi(L('All-time sales'),MX0(allSoldT),allNT+' '+L('sales'),'','📈')+
+      kpi(L('Commission EV owes'),MX0(totalOwed),L('payable to sellers'),totalOwed>0.005?'warn':'','🤝')+
+      kpi(L('Cash held by sellers'),MX0(totalHeld),MX0(totalHeldEV)+' '+L('owed to EV'),totalHeld>0.005?'warn':'','💵')+
+    '</div>'+
+    '<div class="sd-cards">'+ranked.map(card).join('')+'</div>'+
+    '<p class="muted" style="font-size:12px;margin-top:14px;line-height:1.5"><b>'+L('How seller balances work')+':</b> '+
+    L('EV owes now = commission on settled sales not yet paid. Cash in hands = full sale cash a seller collected; they keep 20% and owe EV the rest.')+'</p>';
+}
+
+/* ---------- CLIENTS ---------- */
+function renderClients(){
+  setTitle('Clients','Your relationships and what each one owes');
+  const rows=DB.clients.map(c=>{
+    let spent=0,owed=0,n=0,last='';
+    DB.sales.forEach(s=>{if(s.client===c.name){const x=split(s);spent+=x.amt;n++;if(s.state==='client_owes')owed+=x.amt;if(s.date>last)last=s.date;}});
+    return {c,spent,owed,n,last};
+  }).sort((a,b)=>b.spent-a.spent);
+  views.innerHTML=
+    '<div class="panel"><div class="ph"><h3>'+DB.clients.length+' clients</h3>'+
+    '<button class="btn primary" onclick="clientModal()">+ New client</button></div>'+
+    '<div class="pb"><div class="tablewrap"><table><thead><tr>'+
+    '<th>Client</th><th>Channel</th><th>Location</th><th>Contact</th>'+
+    '<th class="num">Purchases</th><th class="num">Total spent</th><th class="num">Owes EV</th><th>Last buy</th><th></th>'+
+    '</tr></thead><tbody>'+
+    rows.map(o=>'<tr><td><b>'+esc(o.c.name)+'</b>'+(o.c.notes?'<br><small class="muted">'+esc(o.c.notes)+'</small>':'')+'</td>'+
+      '<td><span class="pill grey">'+esc(o.c.channel||'—')+'</span></td>'+
+      '<td>'+esc(o.c.location||'—')+'</td><td>'+esc(o.c.contact||'—')+'</td>'+
+      '<td class="num">'+o.n+'</td><td class="num">'+MX(o.spent)+'</td>'+
+      '<td class="num">'+(o.owed>0?'<span class="pill rust">'+MX(o.owed)+'</span>':'—')+'</td>'+
+      '<td>'+fmtDate(o.last)+'</td>'+
+      '<td><button class="iconbtn" onclick="clientModal(\''+esc(o.c.name).replace(/'/g,"\\'")+'\')">✏️</button>'+
+      '<button class="iconbtn" onclick="delClient(\''+esc(o.c.name).replace(/'/g,"\\'")+'\')">🗑</button></td></tr>').join('')+
+    '</tbody></table></div></div></div>';
+}
+
+/* ---------- PRODUCTS ---------- */
+/* V4.3.1: one window per supplier + an "Old projects" archive window.
+   All windows share DB.products (supplier + archived tags), so history,
+   leaderboards and cloud sync stay intact when a product moves. */
+function renderProducts(){
+  setTitle('Products','Catalog by supplier, plus archived old projects');
+  const stats={};DB.products.forEach(p=>stats[p.name]={units:0,rev:0});
+  DB.sales.forEach(s=>{const st=stats[s.product];if(st){st.units+=(+s.qty||0);st.rev+=amount(s);}});
+  const rowHTML=(p,moves)=>{
+    const pn=esc(p.name).replace(/'/g,"\\'");const st=stats[p.name];
+    return '<tr><td><b>'+esc(p.name)+'</b></td><td class="num">'+MX(p.price)+'</td><td>'+esc(p.unit||'—')+'</td>'+
+      '<td class="num">'+(Math.round(st.units*100)/100)+'</td><td class="num">'+MX(st.rev)+'</td>'+
+      '<td style="white-space:nowrap;text-align:right">'+
+      moves.map(m=>'<button class="btn sm" style="margin-right:4px" onclick="moveProduct(\''+pn+'\',\''+esc(m.dest).replace(/'/g,"\\'")+'\')">'+m.label+'</button>').join('')+
+      '<button class="iconbtn" onclick="productModal(\''+pn+'\')">✏️</button>'+
+      '<button class="iconbtn" onclick="delProduct(\''+pn+'\')">🗑</button></td></tr>';};
+  const panel=(title,icon,list,movesFor,addSup)=>
+    '<div class="panel"><div class="ph"><h3>'+icon+' '+title+' — '+list.length+' products</h3>'+
+    (addSup?'<button class="btn sm primary" onclick="productModal(null,\''+esc(addSup).replace(/'/g,"\\'")+'\')">+ New product</button>':'')+'</div>'+
+    '<div class="pb"><div class="tablewrap" style="max-height:340px"><table><thead><tr>'+
+    '<th>Product</th><th class="num">Default price</th><th>Unit</th><th class="num">Units sold</th><th class="num">Revenue</th><th></th></tr></thead><tbody>'+
+    (list.length?list.map(p=>rowHTML(p,movesFor(p))).join(''):'<tr><td colspan="6" class="empty">'+trText('No products here yet.')+'</td></tr>')+
+    '</tbody></table></div></div></div>';
+  const act=DB.products.filter(p=>!p.archived),arch=DB.products.filter(p=>p.archived);
+  const supPanels=DB.suppliers.map(su=>{
+    const list=act.filter(p=>p.supplier===su.name).sort((a,b)=>stats[b.name].rev-stats[a.name].rev);
+    const others=DB.suppliers.filter(o=>o.name!==su.name);
+    return panel(esc(su.name),su.name==='Bajafly'?'🪰':'🌱',list,
+      p=>others.map(o=>({dest:o.name,label:'→ '+esc(o.name)})).concat([{dest:'__archive__',label:'📦 '+trText('Archive')}]),
+      su.name);
+  }).join('');
+  const orphans=act.filter(p=>!DB.suppliers.some(su=>su.name===p.supplier));
+  views.innerHTML=
+    '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(380px,1fr));align-items:start">'+supPanels+'</div>'+
+    (orphans.length?'<div class="section">'+panel(trText('Other'),'❓',orphans,
+      p=>DB.suppliers.map(o=>({dest:o.name,label:'→ '+esc(o.name)})).concat([{dest:'__archive__',label:'📦 '+trText('Archive')}]),null)+'</div>':'')+
+    '<div class="section">'+panel(trText('Old projects (archive)'),'🗄️',[...arch].sort((a,b)=>sortStr(a.name,b.name)),
+      p=>DB.suppliers.map(o=>({dest:o.name,label:'→ '+esc(o.name)})),null)+'</div>'+
+    '<p class="muted" style="font-size:12px;margin:8px 2px">'+trText('Moving a product between supplier windows changes who earns the 60% on future sales; past sales keep their original supplier. Archived products stay out of the sale menus but keep their full history.')+'</p>';
+}
+function moveProduct(name,dest){
+  const p=DB.products.find(x=>x.name===name);if(!p)return;
+  if(dest==='__archive__'){p.archived=true;
+    if(window.logEvent)logEvent('product_move',{product:name,to:'archive'});
+    save();render();return;}
+  if(p.supplier!==dest&&!confirm(trText('Move to')+' '+dest+'? '+trText('Future sales of this product will credit that supplier (60%). Past sales are not changed.')))return;
+  p.supplier=dest;p.archived=false;
+  if(window.logEvent)logEvent('product_move',{product:name,to:dest});
+  save();render();
+}
+
+/* ---------- SETTLEMENTS ---------- */
+function renderSettlements(){
+  setTitle('Settlements','Payouts to suppliers & sellers, and cash withdrawals');
+  const earned={};
+  DB.salespersons.forEach(n=>earned['seller:'+n]=0);
+  DB.suppliers.forEach(s=>earned['supplier:'+s.name]=0);
+  DB.sales.forEach(s=>{if(s.state==='settled'){const x=split(s);
+    sellerShares(s).forEach(sh=>{earned['seller:'+sh.seller]=(earned['seller:'+sh.seller]||0)+x.seller*sh.w;});
+    earned['supplier:'+s.supplier]=(earned['supplier:'+s.supplier]||0)+x.supplier;}});
+  const paid={};
+  DB.settlements.forEach(p=>{const k=p.type+':'+p.payee;paid[k]=(paid[k]||0)+(+p.amount);});
+  const supRows=DB.suppliers.map(s=>{const e=earned['supplier:'+s.name]||0,p=paid['supplier:'+s.name]||0;
+    return '<tr><td><b>'+esc(s.name)+'</b> <span class="muted">('+esc(s.person)+')</span></td>'+
+    '<td class="num">'+MX(e)+'</td><td class="num">'+MX(p)+'</td><td class="num"><b>'+MX(e-p)+'</b></td>'+
+    '<td><button class="btn sm" onclick="payModal(\'supplier\',\''+esc(s.name).replace(/'/g,"\\'")+'\','+(e-p).toFixed(2)+')">Record payout</button></td></tr>';}).join('');
+  const selRows=DB.salespersons.map(n=>{const e=earned['seller:'+n]||0,p=paid['seller:'+n]||0;
+    return '<tr><td><b>'+esc(n)+'</b></td><td class="num">'+MX(e)+'</td><td class="num">'+MX(p)+'</td><td class="num"><b>'+MX(e-p)+'</b></td>'+
+    '<td><button class="btn sm" onclick="payModal(\'seller\',\''+esc(n).replace(/'/g,"\\'")+'\','+(e-p).toFixed(2)+')">Record payout</button></td></tr>';}).join('');
+  views.innerHTML=
+    '<div class="panel noprint" style="margin-bottom:14px"><div style="padding:12px 16px">'+
+      '<b>Fondo de caja</b><br><span class="muted" style="font-size:12px">Log your opening cash with “+ Fondo de caja” in the ledger below. (To wipe everything and start at zero, open ⚙ Settings in the left rail.)</span>'+
+    '</div></div>'+
+    '<div class="grid" style="grid-template-columns:1fr 1fr;gap:16px">'+
+    '<div class="panel"><div class="ph"><h3>🏭 Owed to suppliers</h3></div><div class="pb"><table><thead><tr>'+
+    '<th>Supplier</th><th class="num">Earned*</th><th class="num">Paid</th><th class="num">Balance</th><th></th></tr></thead><tbody>'+supRows+'</tbody></table></div></div>'+
+    '<div class="panel"><div class="ph"><h3>🧑‍💼 Owed to sellers</h3></div><div class="pb"><table><thead><tr>'+
+    '<th>Seller</th><th class="num">Earned*</th><th class="num">Paid</th><th class="num">Balance</th><th></th></tr></thead><tbody>'+selRows+'</tbody></table></div></div>'+
+    '</div>'+
+    '<p class="muted" style="font-size:12px;margin:8px 2px">*Earned counts only sales whose cash is already in the cashier (settled). Pending sales are excluded so balances reflect real money.</p>'+
+    pkgDebtPanelHTML()+
+    '<div class="section"><div class="panel"><div class="ph"><h3>💸 Payout & withdrawal ledger</h3>'+
+    '<div style="display:flex;gap:6px"><button class="btn sm" onclick="payModal(\'deposit\',\'Fondo de caja\',0)">+ Fondo de caja</button>'+
+    '<button class="btn primary" onclick="payModal(\'withdrawal\',\'\',0)">+ Record movement</button></div></div>'+
+    '<div class="pb"><div class="tablewrap"><table><thead><tr><th>Date</th><th>Time</th><th>Type</th><th>Payee</th><th class="num">Amount</th><th>Method</th><th>Note</th><th></th></tr></thead><tbody>'+
+    (DB.settlements.length?[...DB.settlements].sort((a,b)=>tsOf(b).localeCompare(tsOf(a))).map(p=>
+      '<tr><td>'+fmtDate(p.date)+'</td><td class="muted" style="white-space:nowrap">'+fmtTime(p)+'</td><td><span class="pill '+(p.type==='transfer'?'grey':p.type==='supplier'?'sky':(p.type==='seller'||p.type==='deposit')?'green':'gold')+'">'+esc(p.type)+'</span></td>'+
+      '<td>'+esc(p.payee||'—')+'</td><td class="num"><b>'+MX(p.amount)+'</b></td>'+
+      '<td>'+(p.type==='transfer'?'<span class="pill grey">'+(p.direction==='to_drawer'?'🏦 → 💵':'💵 → 🏦')+'</span>':mthPillHTML(p))+'</td>'+
+      '<td class="muted">'+esc(p.note||'')+'</td>'+
+      '<td><button class="iconbtn" onclick="delSettlement(\''+p.id+'\')">🗑</button></td></tr>').join('')
+      :'<tr><td colspan="8" class="empty">No payouts recorded yet.</td></tr>')+
+    '</tbody></table></div></div></div></div>';
+}
+
+/* V4.2: packaging fronted by a partner → EV owes the payer until reimbursed */
+function pkgDebtPanelHTML(){
+  const fronted={};
+  (DB.packagingExpenses||[]).forEach(e=>{const pb=pkgPaidBy(e);if(pb!=='EV')fronted[pb]=(fronted[pb]||0)+(+e.amount||0);});
+  const reimb={};
+  (DB.settlements||[]).forEach(p=>{if(p.type==='reimbursement')reimb[p.payee]=(reimb[p.payee]||0)+(+p.amount||0);});
+  const payers=[...new Set([...Object.keys(fronted),...Object.keys(reimb)])].sort(sortStr);
+  if(!payers.length)return '';
+  const rows=payers.map(n=>{const f=fronted[n]||0,r=reimb[n]||0;
+    return '<tr><td><b>'+esc(n)+'</b></td><td class="num">'+MX(f)+'</td><td class="num">'+MX(r)+'</td><td class="num"><b>'+MX(f-r)+'</b></td>'+
+    '<td><button class="btn sm" onclick="payModal(\'reimbursement\',\''+esc(n).replace(/'/g,"\\'")+'\','+(f-r).toFixed(2)+')">'+trText('Record reimbursement')+'</button></td></tr>';}).join('');
+  return '<div class="section"><div class="panel"><div class="ph"><h3>📦 '+trText('Packaging fronted (EV owes the payer)')+'</h3></div>'+
+    '<div class="pb"><table><thead><tr><th>'+trText('Payer')+'</th><th class="num">'+trText('Fronted')+'</th><th class="num">'+trText('Reimbursed')+'</th><th class="num">'+trText('Balance')+'</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div></div>';
+}
+
+/* ---------- REPORT (by month or custom date range) ---------- */
+let repFrom='', repTo='';
+function isoD(d){return d.toISOString().slice(0,10);}
+function repInit(){if(!repFrom||!repTo){const d=new Date();repFrom=isoD(new Date(d.getFullYear(),d.getMonth(),1));repTo=isoD(new Date(d.getFullYear(),d.getMonth()+1,0));}}
+function repPreset(which){const d=new Date();
+  if(which==='thismonth'){repFrom=isoD(new Date(d.getFullYear(),d.getMonth(),1));repTo=isoD(new Date(d.getFullYear(),d.getMonth()+1,0));}
+  else if(which==='lastmonth'){repFrom=isoD(new Date(d.getFullYear(),d.getMonth()-1,1));repTo=isoD(new Date(d.getFullYear(),d.getMonth(),0));}
+  else if(which==='thisyear'){repFrom=isoD(new Date(d.getFullYear(),0,1));repTo=isoD(new Date(d.getFullYear(),11,31));}
+  else {repFrom='2000-01-01';repTo='2099-12-31';}
+  render();
+}
+function repApply(){repFrom=document.getElementById('rep_from').value||repFrom;repTo=document.getElementById('rep_to').value||repTo;render();}
+function renderReport(){
+  setTitle('Report','Summary by month or custom date range');
+  repInit();
+  const inR=x=>x.date>=repFrom&&x.date<=repTo;
+  const sales=DB.sales.filter(inR);
+  const pkg=(DB.packagingExpenses||[]).filter(inR);
+  const tot=sales.reduce((a,s)=>a+amount(s),0);
+  let ev=0,salePack=0,settledAmt=0,owesAmt=0,holdsAmt=0;
+  sales.forEach(s=>{const x=split(s);ev+=x.ev;salePack+=x.packaging;
+    if(s.state==='settled')settledAmt+=x.amt;else if(s.state==='client_owes')owesAmt+=x.amt;else holdsAmt+=x.amt;});
+  const bulkPack=pkg.reduce((a,e)=>a+(+e.amount||0),0),pack=salePack+bulkPack,evNet=ev-pack;
+  /* V4.3: cash vs bank flows inside the period */
+  let rCashIn=0,rBankIn=0;
+  sales.forEach(s=>{if(s.state==='settled'){if(mth(s)==='bank')rBankIn+=amount(s);else rCashIn+=amount(s);}});
+  let rCashOut=salePack,rBankOut=0;   /* per-sale packaging counts as cash */
+  (DB.settlements||[]).forEach(p=>{if(p.date>=repFrom&&p.date<=repTo&&p.type!=='deposit'&&p.type!=='transfer'){
+    if(mth(p)==='bank')rBankOut+=(+p.amount||0);else rCashOut+=(+p.amount||0);}});
+  pkg.forEach(e=>{if(pkgPaidBy(e)==='EV'){if(mth(e)==='bank')rBankOut+=(+e.amount||0);else rCashOut+=(+e.amount||0);}});
+  const sup={};DB.suppliers.forEach(su=>sup[su.name]={rev:0,net:0,pack:0,n:0});
+  sales.forEach(s=>{const x=split(s);if(sup[s.supplier]){sup[s.supplier].rev+=x.amt;sup[s.supplier].net+=x.supplier;sup[s.supplier].pack+=x.packaging;sup[s.supplier].n++;}});
+  pkg.forEach(e=>{if(sup[e.supplier])sup[e.supplier].pack+=(+e.amount||0);});
+  const lb=DB.salespersons.map(n=>{let sold=0,comm=0,c=0;sales.forEach(s=>{const sh=sellerShares(s).find(z=>z.seller===n);if(sh){const x=split(s);sold+=x.amt*sh.w;comm+=x.seller*sh.w;c++;}});return {n,sold,comm,c};}).filter(r=>r.c>0).sort((a,b)=>b.sold-a.sold);
+  const fmtR=d=>{const p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];};
+  views.innerHTML=
+    '<div class="panel noprint" style="margin-bottom:14px"><div style="padding:12px 16px;display:flex;gap:10px;align-items:end;flex-wrap:wrap">'+
+      '<div><div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px">From</div><input type="date" id="rep_from" value="'+repFrom+'" onchange="repApply()"></div>'+
+      '<div><div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px">To</div><input type="date" id="rep_to" value="'+repTo+'" onchange="repApply()"></div>'+
+      '<div style="display:flex;gap:6px;flex-wrap:wrap">'+
+        '<button class="btn sm" onclick="repPreset(\'thismonth\')">This month</button>'+
+        '<button class="btn sm" onclick="repPreset(\'lastmonth\')">Last month</button>'+
+        '<button class="btn sm" onclick="repPreset(\'thisyear\')">This year</button>'+
+        '<button class="btn sm" onclick="repPreset(\'all\')">All time</button>'+
+      '</div>'+
+      '<button class="btn primary right" onclick="window.print()">🖨 Print / Save PDF</button>'+
+    '</div></div>'+
+    '<div id="reportSheet">'+
+    '<img class="letterhead-bg" src="Graphic%20ressources/logos/letterhead.png" alt="" onerror="this.style.display=\'none\'">'+
+    '<div class="rep-content">'+
+    '<img class="ev-rep-logo" src="Graphic%20ressources/logos/1_Sin_Fondo.png" alt="Ensenada Verde" style="height:58px;display:block;margin-bottom:4px" onerror="this.style.display=\'none\'">'+
+    '<h2 style="margin:0 0 2px">Ensenada Verde — Report</h2>'+
+    '<div class="muted" style="margin-bottom:14px">'+fmtR(repFrom)+' → '+fmtR(repTo)+' · '+sales.length+' sales</div>'+
+    '<div class="grid cards">'+
+      kpi('Total sales',MX0(tot),sales.length+' sales','accent','💰')+
+      kpi('EV margin (20%)',MX0(ev),'before packaging','','🏪')+
+      kpi('Packaging',MX0(pack),'sale + bulk','warn','📦')+
+      kpi('EV net',MX0(evNet),'margin − packaging',evNet>=0?'accent':'bad','✅')+
+    '</div>'+
+    '<div class="section"><h3>By supplier</h3><div class="panel"><div class="pb"><table><thead><tr><th>Supplier</th><th class="num">Sales</th><th class="num">Revenue</th><th class="num">Net (60%)</th><th class="num">Packaging</th></tr></thead><tbody>'+
+      DB.suppliers.map(su=>{const d=sup[su.name];return '<tr><td><b>'+esc(su.name)+'</b></td><td class="num">'+d.n+'</td><td class="num">'+MX(d.rev)+'</td><td class="num">'+MX(d.net)+'</td><td class="num">'+MX(d.pack)+'</td></tr>';}).join('')+
+    '</tbody></table></div></div></div>'+
+    '<div class="section"><h3>Seller leaderboard</h3><div class="panel"><div class="pb"><table><thead><tr><th>#</th><th>Seller</th><th class="num">Sold</th><th class="num">Commission</th><th class="num">Sales</th></tr></thead><tbody>'+
+      (lb.length?lb.map((r,i)=>'<tr><td>'+(i+1)+'</td><td><b>'+esc(r.n)+'</b></td><td class="num">'+MX(r.sold)+'</td><td class="num">'+MX(r.comm)+'</td><td class="num">'+r.c+'</td></tr>').join('')
+        :'<tr><td colspan="5" class="empty">No sales in this period.</td></tr>')+
+    '</tbody></table></div></div></div>'+
+    '<div class="section"><h3>Cash & receivables (this period)</h3><div class="grid cards">'+
+      kpi('Collected (settled)',MX0(settledAmt),'cash in','accent','🔒')+
+      kpi('Clients owe',MX0(owesAmt),'receivable',owesAmt>0?'bad':'','⏳')+
+      kpi('Sellers holding',MX0(holdsAmt),'not deposited',holdsAmt>0?'warn':'','🤝')+
+    '</div></div>'+
+    '<div class="section"><h3>Cash vs Bank (this period)</h3><div class="grid cards">'+
+      kpi('Cash received',MX0(rCashIn),'settled sales in cash','accent','💵')+
+      kpi('Bank received',MX0(rBankIn),'card + transfers','accent','🏦')+
+      kpi('Cash spent',MX0(rCashOut),'payouts + packaging in cash','warn','📤')+
+      kpi('Bank spent',MX0(rBankOut),'payouts + packaging by bank','warn','📤')+
+    '</div></div>'+
+    '</div></div>';
+}
+function settingsModal(){
+  const pin=(DB.settings&&DB.settings.adminPin)||'';
+  modal.innerHTML=
+    '<div class="mh"><h3>⚙ Settings</h3><button class="iconbtn" onclick="closeModal()">✕</button></div>'+
+    '<div class="mb">'+
+    '<div class="field"><label>Admin PIN '+(pin?'(set)':'(not set)')+'</label>'+
+    '<input id="set_pin" type="password" value="'+esc(pin)+'" placeholder="choose a PIN"></div>'+
+    '<button class="btn primary" onclick="saveAdminPin()">Save PIN</button>'+
+    '<div style="border-top:1px solid var(--line);margin:18px 0 12px"></div>'+
+    '<div style="font-size:11.5px;font-weight:700;color:var(--green-700);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Activity log (automatic)</div>'+
+    '<div class="muted" style="font-size:12px;margin-bottom:8px">Every change is logged to the Google Sheet automatically and tagged with this device. Nothing to set up.</div>'+
+    '<div id="set_devinfo" class="calc" style="font-size:12px"></div>'+
+    '<div class="muted" id="set_qstatus" style="font-size:11.5px;margin-top:8px">'+(window.logQueueCount?window.logQueueCount():0)+' event(s) queued locally</div>'+
+    '<button class="btn" style="margin-top:8px" onclick="if(window.syncLogs)syncLogs()">Sync now</button>'+
+    '<div style="border-top:1px solid var(--line);margin:18px 0 12px"></div>'+
+    '<div class="muted" style="font-size:12px;margin-bottom:10px">'+trText('Sellers and products are managed in their own tabs (left rail).')+'</div>'+
+    '<div style="font-size:11.5px;font-weight:700;color:var(--green-700);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Data</div>'+
+    '<div class="muted" style="font-size:12px;margin-bottom:10px">Export a full backup or restore a previous one.</div>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+    '<button class="btn" onclick="exportJSON()">⬇ Backup</button>'+
+    '<button class="btn" onclick="document.getElementById(\'fileInputSettings\').click()">⬆ Restore</button>'+
+    '<input type="file" id="fileInputSettings" accept=".json" class="hide" onchange="(function(e){const f=e.target.files[0];if(f)importJSON(f);e.target.value=\'\'})(event)">'+
+    '</div>'+
+    '<div style="border-top:1px solid var(--line);margin:18px 0 12px"></div>'+
+    '<div style="font-size:11.5px;font-weight:700;color:var(--rust);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Danger zone</div>'+
+    '<span class="muted" style="font-size:12px">Start fresh deletes all sales, packaging and settlements (keeps products, clients, sellers). Requires the admin PIN.</span><br><br>'+
+    '<button class="btn danger" onclick="startFresh()">Start fresh (clear all transactions)</button>'+
+    '</div>'+
+    '<div class="mf"><button class="btn ghost" onclick="closeModal()">Close</button></div>';
+  openModal();
+  if(window.evRenderDevInfo)window.evRenderDevInfo();
+}
+function saveAdminPin(){
+  if(!DB.settings)DB.settings={};
+  DB.settings.adminPin=document.getElementById('set_pin').value.trim();
+  save();alert(DB.settings.adminPin?'PIN saved.':'PIN cleared.');
+}
+function sellerHasSales(name){return DB.sales.some(s=>s.seller===name||(s.crew&&s.crew.some(c=>c.seller===name)));}
+function addSellerUI(){
+  const nm=(prompt(trText('New seller name'))||'').trim();
+  if(!nm)return;
+  if(DB.salespersons.includes(nm)){alert(trText('That seller already exists.'));return;}
+  DB.salespersons.push(nm);save();render();
+}
+function delSellerUI(name){
+  if(sellerHasSales(name)){alert(trText('Cannot remove a seller who has sales. Their history would break.'));return;}
+  if(!confirm(trText('Remove this seller?')+' '+name))return;
+  DB.salespersons=DB.salespersons.filter(x=>x!==name);save();render();
+}
+function startFresh(){
+  const pin=(DB.settings&&DB.settings.adminPin)||'';
+  if(!pin){alert('Set an admin PIN first in ⚙ Settings before using Start fresh.');return;}
+  const entered=prompt('Enter admin PIN to start fresh:');
+  if(entered===null)return;
+  if(entered!==pin){alert('Incorrect PIN. Nothing was deleted.');return;}
+  if(!confirm('Start fresh? This deletes ALL sales, packaging costs and settlements. Your products, clients and salespeople are kept. This cannot be undone — use Backup first if unsure.'))return;
+  DB.sales=[];DB.packagingExpenses=[];DB.settlements=[];save(DB,{allowReset:true});currentMonth='ALL';closeModal();render();
+  alert('Cleared. Record your Fondo de caja in Settlements → “+ Fondo de caja”.');
+}
+
+/* ---------- SELLERS (V4.3: own tab, moved out of Settings) ---------- */
+function renderSellers(){
+  setTitle('Sellers','Sales crew — add or remove salespeople');
+  const rows=DB.salespersons.map(n=>{
+    let cnt=0,sold=0;
+    DB.sales.forEach(s=>{const sh=sellerShares(s).find(z=>z.seller===n);if(sh){cnt++;sold+=amount(s)*sh.w;}});
+    const used=sellerHasSales(n);
+    const nn=n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return '<tr><td><b>'+esc(n)+'</b></td><td class="num">'+cnt+'</td><td class="num">'+MX(sold)+'</td>'+
+      '<td>'+(used?'<span class="pill grey">'+trText('in use')+'</span>':'<span class="pill green">'+trText('removable')+'</span>')+'</td>'+
+      '<td>'+(used?'':'<button class="iconbtn" onclick="delSellerUI(\''+nn+'\')">🗑</button>')+'</td></tr>';
+  }).join('');
+  views.innerHTML=
+    '<div class="panel"><div class="ph"><h3>🧑‍💼 '+DB.salespersons.length+' sellers</h3>'+
+    '<button class="btn primary" onclick="addSellerUI()">+ Add seller</button></div>'+
+    '<div class="pb"><table><thead><tr><th>Seller</th><th class="num">Sales</th><th class="num">Sold (share)</th><th>Status</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
+    '<p class="muted" style="font-size:12px;margin:8px 2px">'+trText('Sellers with sales cannot be removed — their history would break.')+'</p>';
+}
+
+/* ---------- PACKAGING (bulk costs covered by EV) ---------- */
+function renderPackaging(){
+  setTitle('Packaging','Bulk packaging costs covered by Ensenada Verde');
+  const all=[...(DB.packagingExpenses||[])].sort((a,b)=>tsOf(b).localeCompare(tsOf(a)));
+  const inScope=all.filter(e=>currentMonth==='ALL'||monthKey(e.date)===currentMonth);
+  const bulkTotal=inScope.reduce((a,e)=>a+(+e.amount||0),0);
+  const salePack=salesInScope().reduce((a,s)=>a+(+s.packaging||0),0);
+  let general=0;inScope.forEach(e=>{if(!DB.suppliers.some(su=>su.name===e.supplier))general+=(+e.amount||0);});
+  /* V4.2: partner-fronted packaging still owed back (all-time balance) */
+  let fronted=0,reimb=0;
+  (DB.packagingExpenses||[]).forEach(e=>{if(pkgPaidBy(e)!=='EV')fronted+=(+e.amount||0);});
+  (DB.settlements||[]).forEach(p=>{if(p.type==='reimbursement')reimb+=(+p.amount||0);});
+  const owedPayers=Math.max(0,fronted-reimb);
+  views.innerHTML=
+    '<div class="grid cards">'+
+      kpi('Total packaging',MX0(salePack+bulkTotal),'sale + bulk','warn','📦')+
+      kpi('Per-sale packaging',MX0(salePack),'entered on sales','','🧾')+
+      kpi('Bulk packaging',MX0(bulkTotal),'logged here','','🏷️')+
+      kpi(trText('Owed to payers'),MX0(owedPayers),trText('unreimbursed packaging'),owedPayers>0?'warn':'','🤝')+
+    '</div>'+
+    '<div class="section"><div class="panel"><div class="ph"><h3>🏷️ Bulk packaging expenses</h3>'+
+    '<button class="btn primary" onclick="pkgModal()">+ Add packaging cost</button></div>'+
+    '<div class="pb"><div class="tablewrap"><table><thead><tr>'+
+    '<th>Date</th><th>Time</th><th>For supplier</th><th class="num">Amount</th><th>Paid by</th><th>Method</th><th>Note</th><th></th></tr></thead><tbody>'+
+    (inScope.length?inScope.map(e=>{const pb=pkgPaidBy(e);
+      return '<tr><td>'+fmtDate(e.date)+'</td><td class="muted" style="white-space:nowrap">'+fmtTime(e)+'</td>'+
+      '<td><span class="pill '+(e.supplier==='Bajafly'?'green':e.supplier==='Gamiz'?'sky':'grey')+'">'+esc(e.supplier)+'</span></td>'+
+      '<td class="num"><b>'+MX(e.amount)+'</b></td>'+
+      '<td><span class="pill '+(pb==='EV'?'grey':pb==='Bajafly'?'green':'sky')+'">'+esc(pb)+' '+trText('paid')+'</span></td>'+
+      '<td>'+mthPillHTML(e)+'</td>'+
+      '<td class="muted">'+esc(e.note||'')+'</td>'+
+      '<td><button class="iconbtn" onclick="pkgModal(\''+e.id+'\')">✏️</button>'+
+      '<button class="iconbtn" onclick="delPkg(\''+e.id+'\')">🗑</button></td></tr>';}).join('')
+      :'<tr><td colspan="8" class="empty">No bulk packaging logged yet. Click “+ Add packaging cost”.</td></tr>')+
+    '</tbody></table></div></div></div></div>'+
+    '<p class="muted" style="font-size:12px;margin:8px 2px">Tag a cost to Bajafly or Gamiz and it shows in that supplier’s packaging load on the dashboard. “General” still counts toward EV’s total packaging and lowers EV net'+(general>0?' (general so far: '+MX(general)+')':'')+'.</p>';
+}
+function pkgModal(id){
+  const e=id?(DB.packagingExpenses||[]).find(x=>x.id===id):{date:today(),supplier:'General',amount:'',note:''};
+  modal.innerHTML=
+    '<div class="mh"><h3>'+(id?'Edit packaging cost':'New packaging cost')+'</h3><button class="iconbtn" onclick="closeModal()">✕</button></div>'+
+    '<div class="mb"><div class="row2"><div class="field"><label>Date</label><input type="date" id="k_date" value="'+e.date+'"></div>'+
+    '<div class="field"><label>For supplier</label><select id="k_supplier">'+
+    '<option'+(e.supplier==='General'?' selected':'')+'>General</option>'+
+    DB.suppliers.map(su=>'<option'+(su.name===e.supplier?' selected':'')+'>'+esc(su.name)+'</option>').join('')+'</select></div></div>'+
+    '<div class="row2"><div class="field"><label>Paid by</label><select id="k_paidby">'+
+    '<option value="EV"'+(pkgPaidBy(e)==='EV'?' selected':'')+'>EV</option>'+
+    DB.suppliers.map(su=>'<option value="'+esc(su.name)+'"'+(pkgPaidBy(e)===su.name?' selected':'')+'>'+esc(su.name)+'</option>').join('')+'</select>'+
+    '<small class="muted">'+trText('If a partner paid, EV owes them a reimbursement (see Settlements).')+'</small></div>'+
+    '<div class="field"><label>Amount (MXN)</label><input type="number" id="k_amount" value="'+e.amount+'" step="0.01"></div></div>'+
+    '<div class="field"><label>Payment method</label>'+methodToggleHTML('k_method',mth(e))+'</div>'+
+    '<div class="field"><label>Note (what was packaged)</label><input id="k_note" value="'+esc(e.note||'')+'"></div></div>'+
+    '<div class="mf">'+(id?'<button class="btn danger" onclick="delPkg(\''+id+'\',true)">Delete</button>':'')+
+    '<button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+    '<button class="btn primary" onclick="savePkg(\''+(id||'')+'\')">'+(id?'Save':'Add cost')+'</button></div>';
+  openModal();
+}
+function savePkg(id){
+  const g=i=>document.getElementById(i).value;
+  const rec={date:g('k_date'),ts:g('k_date')+'T'+nowTime(),supplier:document.getElementById('k_supplier').value,paidBy:document.getElementById('k_paidby').value||'EV',method:mtGet('k_method'),amount:+g('k_amount')||0,note:g('k_note').trim()};
+  if(!rec.amount){alert('Enter an amount');return;}
+  if(!DB.packagingExpenses)DB.packagingExpenses=[];
+  if(id){const ex=DB.packagingExpenses.find(x=>x.id===id);if(ex.ts&&ex.date===rec.date)rec.ts=ex.ts;Object.assign(ex,rec);}else{rec.id=uid();DB.packagingExpenses.push(rec);}
+  save();closeModal();render();
+}
+function delPkg(id,fromModal){
+  if(!confirm('Delete this packaging cost?'))return;
+  DB.packagingExpenses=(DB.packagingExpenses||[]).filter(x=>x.id!==id);save();if(fromModal)closeModal();render();
+}
+
+/* ============================================================ MODALS ============================================================ */
+const modalBg=document.getElementById('modalBg'), modal=document.getElementById('modal');
+function closeModal(){modalBg.classList.remove('show');modal.innerHTML='';modal.style.maxWidth='';if(window._postModal){const fn=window._postModal;window._postModal=null;fn();}}
+function openModal(){localize(modal);modalBg.classList.add('show');}
+modalBg.addEventListener('click',e=>{if(e.target===modalBg)closeModal();});
+/* V4.3.1: second modal layer — a pop-out ON TOP of an open modal (e.g. register
+   a new client while the sale window stays open with everything typed intact). */
+const modalBg2=document.getElementById('modalBg2'), modal2=document.getElementById('modal2');
+function closeModal2(){modalBg2.classList.remove('show');modal2.innerHTML='';}
+function openModal2(){localize(modal2);modalBg2.classList.add('show');}
+modalBg2.addEventListener('click',e=>{if(e.target===modalBg2)closeModal2();});
+
+let lastCrew=null,lastEventName='';
+function readCrewFromForm(){
+  return [...document.querySelectorAll('#crewBox label')].map(lb=>{
+    const ck=lb.querySelector('.crewck');if(!ck||!ck.checked)return null;
+    const hr=lb.querySelector('.crewhr');
+    return {seller:ck.dataset.seller,hours:+((hr&&hr.value)||0)};
+  }).filter(Boolean);
+}
+function saleModal(id){
+  const s=id?DB.sales.find(x=>x.id===id):{date:today(),ts:today()+'T'+nowTime(),product:'',seller:DB.salespersons[0],supplier:DB.suppliers[0].name,price:'',qty:1,client:'',state:'settled',packaging:0,notes:''};
+  const newProd=!id&&window._newProductName;
+  window._newProductName=null;
+  const isEvent=id&&s.crew&&s.crew.length>0;
+  /* V4.3.1: short list — the 10 most-used products (+ current selection) */
+  const selName=newProd||s.product;
+  let listed=topProducts(10);
+  if(selName&&!listed.some(p=>p.name===selName)){const px=DB.products.find(p=>p.name===selName);if(px)listed=[px,...listed];}
+  const prodOpts=listed.map(p=>'<option value="'+esc(p.name)+'" data-price="'+p.price+'" data-sup="'+esc(p.supplier)+'"'+(selName===p.name?' selected':'')+'>'+esc(p.name)+' — '+MX0(p.price)+'/'+esc(p.unit)+'</option>').join('');
+  const crewRows=DB.salespersons.map(n=>{const c=isEvent?(s.crew||[]).find(x=>x.seller===n):null;return '<label style="display:flex;align-items:center;gap:6px;padding:3px 0"><input type="checkbox" class="crewck" data-seller="'+esc(n)+'"'+(c?' checked':'')+'>'+esc(n)+'<input type="number" class="crewhr" placeholder="hrs" value="'+(c?c.hours:'')+'" step="0.5" style="width:55px;margin-left:4px;padding:2px 4px;border:1px solid var(--line);border-radius:4px"></label>';}).join('');
+  modal.innerHTML=
+    '<div class="mh"><h3>'+(id?'Edit sale':'New sale')+'</h3><button class="iconbtn" onclick="closeModal()">✕</button></div>'+
+    '<div class="mb">'+
+    '<div class="row2"><div class="field"><label>Date</label><input type="date" id="f_date" value="'+s.date+'"></div>'+
+    '<div class="field"><label>Time</label><input type="time" id="f_time" step="1" value="'+(s.ts?s.ts.slice(11,19):nowTime())+'"></div></div>'+
+    '<div class="row2"><div class="field"><label>Status</label><select id="f_state">'+
+    Object.keys(PAY_STATES).map(k=>'<option value="'+k+'"'+(s.state===k?' selected':'')+'>'+PAY_STATES[k].label+'</option>').join('')+'</select></div>'+
+    '<div class="field"><label>Payment method</label>'+methodToggleHTML('f_method',mth(s))+'</div></div>'+
+    '<div class="field"><label>Product</label><select id="f_product">'+prodOpts+
+    '<option value="__new__">⊕ Add new product…</option>'+
+    '<option value="__search__">🔍 Search product database…</option>'+
+    '</select></div>'+
+    '<div class="field hide" id="prodSearch"><label>Search product database</label>'+
+    '<input id="f_prodsearch" placeholder="type to search…" autocomplete="off">'+
+    '<div id="prodSearchResults" style="max-height:160px;overflow:auto;border:1px solid var(--line);border-radius:9px;margin-top:5px"></div></div>'+
+    '<div id="regularSeller" style="'+(isEvent?'display:none':'')+'">'+
+    '<div class="row2"><div class="field"><label>Salesperson</label><select id="f_seller">'+
+    DB.salespersons.map(n=>'<option'+(n===s.seller?' selected':'')+'>'+esc(n)+'</option>').join('')+'</select></div>'+
+    '<div class="field"><label>Supplier</label><select id="f_supplier">'+
+    DB.suppliers.map(su=>'<option'+(su.name===s.supplier?' selected':'')+'>'+esc(su.name)+'</option>').join('')+'</select></div></div>'+
+    '</div>'+
+    '<div class="field"><label><input type="checkbox" id="f_isEvent"'+(isEvent?' checked':'')+'> Event sale (split commission by hours)</label></div>'+
+    '<div id="eventBox" style="'+(isEvent?'':'display:none')+'">'+
+    '<div class="field"><label>Event name</label><input id="f_eventName" value="'+esc(isEvent?s.eventName:'')+'"></div>'+
+    '<div class="field"><b>Crew &amp; hours worked</b><br><small>Tip: commission is shared by hours. Leave all hours blank to split evenly.</small>'+
+    '<div id="crewBox">'+crewRows+'</div></div>'+
+    '</div>'+
+    '<div class="row2"><div class="field"><label>Unit price (MXN)</label><input type="number" id="f_price" value="'+(newProd?'':s.price)+'" step="0.01"></div>'+
+    '<div class="field"><label>Quantity</label><input type="number" id="f_qty" value="'+s.qty+'" step="0.5"></div></div>'+
+    '<div class="row2"><div class="field"><label>Client / channel</label>'+
+    '<div style="display:flex;gap:6px"><input list="clientList" id="f_client" value="'+esc(s.client)+'" style="flex:1;min-width:0">'+
+    '<button type="button" class="btn" title="'+trText('New client')+'" onclick="clientModal(null,1)">⊕</button></div>'+
+    '<datalist id="clientList">'+DB.clients.map(c=>'<option>'+esc(c.name)+'</option>').join('')+'</datalist></div>'+
+    '<div class="field"><label>Packaging cost — paid by EV (MXN)</label><input type="number" id="f_pack" value="'+(s.packaging||0)+'" step="0.01"></div></div>'+
+    '<div class="field"><label>Notes</label><input id="f_notes" value="'+esc(s.notes||'')+'"></div>'+
+    '<div class="calc" id="f_calc"></div></div>'+
+    '<div class="mf">'+(id?'<button class="btn danger" onclick="delSale(\''+id+'\',true)">Delete</button>':'')+
+    '<button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+    '<button class="btn primary" onclick="saveSale(\''+(id||'')+'\')">'+(id?'Save':'Add sale')+'</button></div>';
+  openModal();
+  const pr=document.getElementById('f_product');
+  const savedId=id;
+  pr.addEventListener('change',()=>{
+    if(pr.value==='__new__'){
+      window._postModal=()=>saleModal(savedId||null);
+      closeModal();productModal();return;
+    }
+    if(pr.value==='__search__'){
+      const box=document.getElementById('prodSearch');box.classList.remove('hide');
+      renderProdSearch('');document.getElementById('f_prodsearch').focus();return;
+    }
+    document.getElementById('prodSearch').classList.add('hide');
+    const o=pr.selectedOptions[0];
+    if(o.dataset.price)document.getElementById('f_price').value=o.dataset.price;
+    if(o.dataset.sup)document.getElementById('f_supplier').value=o.dataset.sup;
+    liveCalc();
+  });
+  document.getElementById('f_prodsearch').addEventListener('input',e=>renderProdSearch(e.target.value));
+  document.getElementById('prodSearchResults').addEventListener('click',e=>{
+    const el=e.target.closest('[data-pname]');if(el)pickSearchedProduct(el.dataset.pname);
+  });
+  const evChk=document.getElementById('f_isEvent');
+  evChk.addEventListener('change',()=>{
+    document.getElementById('eventBox').style.display=evChk.checked?'':'none';
+    document.getElementById('regularSeller').style.display=evChk.checked?'none':'';
+  });
+  ['f_price','f_qty','f_pack'].forEach(i=>{const el=document.getElementById(i);if(el)el.addEventListener('input',liveCalc);});
+  if(newProd){
+    const opt=Array.from(document.querySelectorAll('#f_product option')).find(function(o){return o.value===newProd;});
+    if(opt){pr.value=newProd;const o=pr.selectedOptions[0];if(o&&o.dataset.price)document.getElementById('f_price').value=o.dataset.price;if(o&&o.dataset.sup)document.getElementById('f_supplier').value=o.dataset.sup;}
+  }
+  liveCalc();
+}
+/* V4.3.1: full-database product search inside the sale window */
+function renderProdSearch(q){
+  const box=document.getElementById('prodSearchResults');if(!box)return;
+  q=(q||'').toLowerCase();
+  const hits=DB.products.filter(p=>!q||p.name.toLowerCase().indexOf(q)>=0).slice(0,40);
+  box.innerHTML=hits.length?hits.map(p=>
+    '<div data-pname="'+esc(p.name)+'" style="padding:7px 10px;cursor:pointer;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px;align-items:center">'+
+    '<span><b>'+esc(p.name)+'</b>'+(p.archived?' <span class="pill grey">📦 '+trText('old')+'</span>':'')+'</span>'+
+    '<span class="muted" style="font-size:12px;white-space:nowrap">'+MX0(p.price)+'/'+esc(p.unit||'u')+' · '+esc(p.supplier)+'</span></div>').join('')
+    :'<div class="empty" style="padding:14px">'+trText('No matches')+'</div>';
+}
+function pickSearchedProduct(name){
+  const p=DB.products.find(x=>x.name===name);if(!p)return;
+  const pr=document.getElementById('f_product');if(!pr)return;
+  if(![...pr.options].some(o=>o.value===p.name)){
+    const o=document.createElement('option');
+    o.value=p.name;o.dataset.price=p.price;o.dataset.sup=p.supplier;
+    o.textContent=p.name+' — '+MX0(p.price)+'/'+(p.unit||'');
+    pr.insertBefore(o,pr.querySelector('option[value="__new__"]'));
+  }
+  pr.value=p.name;
+  document.getElementById('f_price').value=p.price;
+  const supSel=document.getElementById('f_supplier');if(supSel)supSel.value=p.supplier;
+  document.getElementById('prodSearch').classList.add('hide');
+  liveCalc();
+}
+function liveCalc(){
+  const price=+document.getElementById('f_price').value||0,qty=+document.getElementById('f_qty').value||0,pack=+document.getElementById('f_pack').value||0;
+  const amt=price*qty,ev=amt*EV_RATE,seller=amt*SELLER_RATE,sup=amt-ev-seller;
+  const el=document.getElementById('f_calc');if(!el)return;
+  el.innerHTML=
+    '<div><span>Sale amount</span><b>'+MX(amt)+'</b></div>'+
+    '<div><span>Salesperson (20%)</span><b>'+MX(seller)+'</b></div>'+
+    '<div><span>Supplier (60%)</span><b>'+MX(sup)+'</b></div>'+
+    '<div style="border-top:1px dashed #b9dcc6;margin-top:4px;padding-top:4px"><span>EV net after packaging</span><b>'+MX(ev-pack)+'</b></div>';
+  localize(el);
+}
+function saveSale(id){
+  const g=i=>document.getElementById(i).value;
+  const isEv=document.getElementById('f_isEvent')&&document.getElementById('f_isEvent').checked;
+  const rec={date:g('f_date'),ts:g('f_date')+'T'+timeFull(g('f_time')),
+    product:g('f_product'),supplier:document.getElementById('f_supplier')?g('f_supplier'):DB.suppliers[0].name,
+    price:+g('f_price'),qty:+g('f_qty'),client:g('f_client'),state:g('f_state'),
+    packaging:+g('f_pack')||0,method:mtGet('f_method'),notes:g('f_notes')};
+  if(rec.product==='__new__'||rec.product==='__search__'){alert('Pick or add a product first');return;}
+  if(!rec.product){alert('Pick a product');return;}
+  if(!rec.price||!rec.qty){alert('Enter a price and quantity');return;}
+  if(isEv){
+    rec.crew=readCrewFromForm();
+    if(!rec.crew.length){alert(trText('Select at least one crew member who worked the event'));return;}
+    rec.eventName=g('f_eventName');
+    rec.seller='';
+  }else{
+    rec.seller=document.getElementById('f_seller')?g('f_seller'):'';
+  }
+  if(id){Object.assign(DB.sales.find(x=>x.id===id),rec);}else{rec.id=uid();DB.sales.push(rec);}
+  save();closeModal();render();
+}
+function delSale(id,fromModal){
+  if(!confirm('Delete this sale?'))return;
+  DB.sales=DB.sales.filter(x=>x.id!==id);save();if(fromModal)closeModal();render();
+}
+
+/* ---------- V4.2 EVENT SALE (multi-item entry window) ----------
+   One window: crew + hours (commission pro-rata by hours), then any number
+   of item lines (product, price, qty, client, packaging). Each line becomes
+   one sale sharing the same crew/event. New client names are saved to the
+   client database permanently. */
+function evItemRowHTML(){
+  const prodOpts=DB.products.filter(p=>!p.archived).map(p=>'<option value="'+esc(p.name)+'" data-price="'+p.price+'" data-sup="'+esc(p.supplier)+'">'+esc(p.name)+' — '+MX0(p.price)+'/'+esc(p.unit)+'</option>').join('');
+  return '<div class="ev-item" style="display:grid;grid-template-columns:minmax(140px,2fr) 84px 64px minmax(110px,1.4fr) 80px 66px 26px;gap:6px;margin:6px 0;align-items:center">'+
+    '<select class="evi-prod"><option value="">— '+trText('Product')+' —</option>'+prodOpts+'</select>'+
+    '<input type="number" class="evi-price" placeholder="$/u" step="0.01">'+
+    '<input type="number" class="evi-qty" placeholder="qty" value="1" step="0.5">'+
+    '<input class="evi-client" list="evClientList" placeholder="'+trText('Client')+'">'+
+    '<input type="number" class="evi-pack" placeholder="pack $" step="0.01">'+
+    '<select class="evi-method" title="'+trText('Payment method')+'"><option value="cash">💵 '+trText('Cash')+'</option><option value="bank">🏦 '+trText('Bank')+'</option></select>'+
+    '<button class="iconbtn" onclick="this.parentNode.remove();evCalc()" tabindex="-1">🗑</button>'+
+    '</div>';
+}
+function evAddItem(){
+  document.getElementById('evItems').insertAdjacentHTML('beforeend',evItemRowHTML());
+}
+function evCalc(){
+  let amt=0,pack=0;
+  document.querySelectorAll('#evItems .ev-item').forEach(r=>{
+    amt+=(+r.querySelector('.evi-price').value||0)*(+r.querySelector('.evi-qty').value||0);
+    pack+=(+r.querySelector('.evi-pack').value||0);
+  });
+  const ev=amt*EV_RATE,seller=amt*SELLER_RATE,sup=amt-ev-seller;
+  const el=document.getElementById('ev_calc');if(!el)return;
+  el.innerHTML=
+    '<div><span>Sale amount</span><b>'+MX(amt)+'</b></div>'+
+    '<div><span>Salesperson (20%)</span><b>'+MX(seller)+'</b></div>'+
+    '<div><span>Supplier (60%)</span><b>'+MX(sup)+'</b></div>'+
+    '<div style="border-top:1px dashed #b9dcc6;margin-top:4px;padding-top:4px"><span>EV net after packaging</span><b>'+MX(ev-pack)+'</b></div>';
+  localize(el);
+}
+function eventSaleModal(){
+  modal.style.maxWidth='780px';
+  const crewRows=DB.salespersons.map(n=>'<label style="display:flex;align-items:center;gap:6px;padding:3px 0"><input type="checkbox" class="crewck" data-seller="'+esc(n)+'">'+esc(n)+'<input type="number" class="crewhr" placeholder="hrs" step="0.5" style="width:55px;margin-left:4px;padding:2px 4px;border:1px solid var(--line);border-radius:4px"></label>').join('');
+  modal.innerHTML=
+    '<div class="mh"><h3>🎪 '+trText('Event sale — multiple items')+'</h3><button class="iconbtn" onclick="closeModal()">✕</button></div>'+
+    '<div class="mb">'+
+    '<div class="row3"><div class="field"><label>Date</label><input type="date" id="ev_date" value="'+today()+'"></div>'+
+    '<div class="field"><label>Time</label><input type="time" id="ev_time" step="1" value="'+nowTime()+'"></div>'+
+    '<div class="field"><label>Status</label><select id="ev_state">'+
+    Object.keys(PAY_STATES).map(k=>'<option value="'+k+'"'+(k==='settled'?' selected':'')+'>'+PAY_STATES[k].label+'</option>').join('')+'</select></div></div>'+
+    '<div class="field"><label>Event name</label><input id="ev_name"></div>'+
+    '<div class="field"><b>Crew &amp; hours worked</b><br><small>Tip: commission is shared by hours. Leave all hours blank to split evenly.</small>'+
+    '<div id="crewBox">'+crewRows+'</div></div>'+
+    '<div class="field"><b>'+trText('Items sold')+'</b>'+
+    '<div id="evItems"></div>'+
+    '<datalist id="evClientList">'+DB.clients.map(c=>'<option>'+esc(c.name)+'</option>').join('')+'</datalist>'+
+    '<button class="btn sm" onclick="evAddItem()">+ '+trText('Add item')+'</button> '+
+    '<button class="btn sm" onclick="clientModal(null,1)">⊕ '+trText('New client')+'</button></div>'+
+    '<div class="calc" id="ev_calc"></div></div>'+
+    '<div class="mf"><button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+    '<button class="btn primary" onclick="saveEventSale()">'+trText('Add sales')+'</button></div>';
+  openModal();
+  const box=document.getElementById('evItems');
+  box.addEventListener('change',e=>{
+    const t=e.target;
+    if(t.classList.contains('evi-prod')){
+      const o=t.selectedOptions[0],row=t.closest('.ev-item');
+      if(o&&o.dataset.price)row.querySelector('.evi-price').value=o.dataset.price;
+    }
+    evCalc();
+  });
+  box.addEventListener('input',evCalc);
+  evAddItem();evCalc();
+}
+function saveEventSale(){
+  const g=i=>document.getElementById(i).value;
+  const crew=readCrewFromForm();
+  if(!crew.length){alert(trText('Select at least one crew member who worked the event'));return;}
+  const date=g('ev_date'),ts=date+'T'+timeFull(g('ev_time')),state=g('ev_state'),eventName=g('ev_name').trim();
+  const rows=[...document.querySelectorAll('#evItems .ev-item')].map(r=>{
+    const sel=r.querySelector('.evi-prod'),o=sel.selectedOptions[0];
+    return {product:sel.value,price:+r.querySelector('.evi-price').value,qty:+r.querySelector('.evi-qty').value,
+      client:r.querySelector('.evi-client').value.trim(),packaging:+r.querySelector('.evi-pack').value||0,
+      method:(r.querySelector('.evi-method')&&r.querySelector('.evi-method').value)==='bank'?'bank':'cash',
+      supplier:(o&&o.dataset.sup)||''};
+  }).filter(r=>r.product&&r.price&&r.qty);
+  if(!rows.length){alert(trText('Add at least one item with product, price and quantity'));return;}
+  let newClients=0;
+  rows.forEach(r=>{
+    if(r.client&&!DB.clients.some(c=>c.name===r.client)){
+      DB.clients.push({name:r.client,contact:'',location:'',channel:'Event',notes:'Added from event: '+(eventName||date)});
+      newClients++;
+    }
+    DB.sales.push({id:uid(),date:date,ts:ts,product:r.product,seller:'',
+      supplier:r.supplier||DB.suppliers[0].name,price:r.price,qty:r.qty,client:r.client,
+      state:state,packaging:r.packaging,method:r.method,notes:'',eventName:eventName,
+      crew:crew.map(c=>({seller:c.seller,hours:c.hours}))});
+  });
+  if(window.logEvent)logEvent('event_sale_create',{event:eventName,items:rows.length,new_clients:newClients,crew:crew,total:rows.reduce((a,r)=>a+r.price*r.qty,0)});
+  save();closeModal();render();
+}
+
+/* V4.3.1: sub=truthy renders the client form in the SECOND modal layer, on top
+   of an open sale/event window — nothing typed there is lost. On save the new
+   client is filled into #f_client (if present) and added to open datalists. */
+function clientModal(name,sub){
+  const c=name?DB.clients.find(x=>x.name===name):{name:'',contact:'',location:'',channel:'Direct',notes:''};
+  const M=sub?modal2:modal, X=sub?'closeModal2()':'closeModal()';
+  M.innerHTML=
+    '<div class="mh"><h3>'+(name?'Edit client':'New client')+'</h3><button class="iconbtn" onclick="'+X+'">✕</button></div>'+
+    '<div class="mb"><div class="field"><label>Name</label><input id="c_name" value="'+esc(c.name)+'"></div>'+
+    '<div class="row2"><div class="field"><label>Channel</label><input id="c_channel" value="'+esc(c.channel||'')+'" list="chList">'+
+    '<datalist id="chList"><option>Direct</option><option>Facebook</option><option>Instagram</option><option>WhatsApp</option><option>Referral</option></datalist></div>'+
+    '<div class="field"><label>Location</label><input id="c_location" value="'+esc(c.location||'')+'"></div></div>'+
+    '<div class="field"><label>Contact (phone / email)</label><input id="c_contact" value="'+esc(c.contact||'')+'"></div>'+
+    '<div class="field"><label>Notes / relationship</label><textarea id="c_notes" rows="3">'+esc(c.notes||'')+'</textarea></div></div>'+
+    '<div class="mf"><button class="btn ghost" onclick="'+X+'">Cancel</button>'+
+    '<button class="btn primary" onclick="saveClient(\''+(name?esc(name).replace(/'/g,"\\'"):'')+'\','+(sub?1:0)+')">'+(name?'Save':'Add client')+'</button></div>';
+  if(sub)openModal2();else openModal();
+}
+function saveClient(orig,sub){
+  const g=i=>document.getElementById(i).value.trim();
+  const rec={name:g('c_name'),channel:g('c_channel'),location:g('c_location'),contact:g('c_contact'),notes:g('c_notes')};
+  if(!rec.name){alert('Name required');return;}
+  if(orig){const c=DB.clients.find(x=>x.name===orig);const old=c.name;Object.assign(c,rec);
+    if(old!==rec.name)DB.sales.forEach(s=>{if(s.client===old)s.client=rec.name;});}
+  else{if(DB.clients.some(x=>x.name===rec.name)){alert('Client already exists');return;}DB.clients.push(rec);}
+  if(sub){save();closeModal2();
+    const fc=document.getElementById('f_client');if(fc)fc.value=rec.name;
+    ['clientList','evClientList'].forEach(id=>{const dl=document.getElementById(id);
+      if(dl&&![...dl.options].some(o=>o.value===rec.name)){const o=document.createElement('option');o.value=rec.name;dl.appendChild(o);}});
+    return;}
+  save();closeModal();render();
+}
+function delClient(name){
+  if(!confirm('Delete client "'+name+'"? Their sales stay in the log.'))return;
+  DB.clients=DB.clients.filter(x=>x.name!==name);save();render();
+}
+
+function productModal(name,defSup){
+  const p=name?DB.products.find(x=>x.name===name):{name:'',supplier:defSup||DB.suppliers[0].name,price:'',unit:''};
+  modal.innerHTML=
+    '<div class="mh"><h3>'+(name?'Edit product':'New product')+'</h3><button class="iconbtn" onclick="closeModal()">✕</button></div>'+
+    '<div class="mb"><div class="field"><label>Product name</label><input id="p_name" value="'+esc(p.name)+'"></div>'+
+    '<div class="row3"><div class="field"><label>Supplier</label><select id="p_supplier">'+
+    DB.suppliers.map(su=>'<option'+(su.name===p.supplier?' selected':'')+'>'+esc(su.name)+'</option>').join('')+'</select></div>'+
+    '<div class="field"><label>Default price</label><input type="number" id="p_price" value="'+p.price+'" step="0.01"></div>'+
+    '<div class="field"><label>Unit</label><input id="p_unit" value="'+esc(p.unit||'')+'"></div></div></div>'+
+    '<div class="mf"><button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+    '<button class="btn primary" onclick="saveProduct(\''+(name?esc(name).replace(/'/g,"\\'"):'')+'\')">'+(name?'Save':'Add product')+'</button></div>';
+  openModal();
+}
+function saveProduct(orig){
+  const g=i=>document.getElementById(i).value.trim();
+  const rec={name:g('p_name'),supplier:document.getElementById('p_supplier').value,price:+document.getElementById('p_price').value,unit:g('p_unit')};
+  if(!rec.name){alert('Name required');return;}
+  if(orig){const p=DB.products.find(x=>x.name===orig);const old=p.name;Object.assign(p,rec);
+    if(old!==rec.name)DB.sales.forEach(s=>{if(s.product===old)s.product=rec.name;});}
+  else{if(DB.products.some(x=>x.name===rec.name)){alert('Product already exists');return;}DB.products.push(rec);}
+  if(!orig)window._newProductName=rec.name;
+  save();closeModal();render();
+  if(window._postModal){const fn=window._postModal;window._postModal=null;fn();}
+}
+function delProduct(name){
+  if(!confirm('Delete product "'+name+'"?'))return;
+  DB.products=DB.products.filter(x=>x.name!==name);save();render();
+}
+
+function payModal(type,payee,suggested){
+  const isW=type==='withdrawal';
+  modal.innerHTML=
+    '<div class="mh"><h3>Record '+esc(type)+(payee?' · '+esc(payee):'')+'</h3><button class="iconbtn" onclick="closeModal()">✕</button></div>'+
+    '<div class="mb"><div class="row2"><div class="field"><label>Date</label><input type="date" id="y_date" value="'+today()+'"></div>'+
+    '<div class="field"><label>Type</label><select id="y_type">'+
+    '<option value="supplier"'+(type==='supplier'?' selected':'')+'>Supplier payout</option>'+
+    '<option value="seller"'+(type==='seller'?' selected':'')+'>Seller payout</option>'+
+    '<option value="reimbursement"'+(type==='reimbursement'?' selected':'')+'>Packaging reimbursement</option>'+
+    '<option value="deposit"'+(type==='deposit'?' selected':'')+'>Fondo de caja / deposit (in)</option>'+
+    '<option value="withdrawal"'+(type==='withdrawal'?' selected':'')+'>Withdrawal / expense</option>'+
+    '<option value="transfer"'+(type==='transfer'?' selected':'')+'>Drawer ↔ Bank transfer</option></select></div></div>'+
+    '<div class="row2"><div class="field"><label>Payee</label><input id="y_payee" value="'+esc(payee||'')+'" placeholder="'+(isW?'reason (e.g. retiro)':'name')+'"></div>'+
+    '<div class="field"><label>Amount (MXN)</label><input type="number" id="y_amount" value="'+(suggested>0?suggested:'')+'" step="0.01"></div></div>'+
+    '<div class="row2"><div class="field" id="y_methodwrap"><label>Payment method</label>'+methodToggleHTML('y_method','cash')+'</div>'+
+    '<div class="field hide" id="y_dirwrap"><label>Direction</label><select id="y_dir">'+
+    '<option value="to_bank">Drawer → Bank (deposit cash)</option>'+
+    '<option value="to_drawer">Bank → Drawer (cash out)</option>'+
+    '</select></div></div>'+
+    '<div class="field"><label>Note</label><input id="y_note" value=""></div></div>'+
+    '<div class="mf"><button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+    '<button class="btn primary" onclick="savePay()">Record</button></div>';
+  openModal();
+  const yt=document.getElementById('y_type');
+  const syncPayFields=function(){const isT=yt.value==='transfer';
+    document.getElementById('y_dirwrap').classList.toggle('hide',!isT);
+    document.getElementById('y_methodwrap').classList.toggle('hide',isT);};
+  yt.addEventListener('change',syncPayFields);syncPayFields();
+}
+function savePay(){
+  const g=i=>document.getElementById(i).value;
+  const rec={id:uid(),date:g('y_date'),ts:g('y_date')+'T'+nowTime(),type:g('y_type'),payee:g('y_payee').trim(),amount:+g('y_amount'),method:mtGet('y_method'),note:g('y_note').trim()};
+  if(rec.type==='transfer'){rec.direction=g('y_dir')==='to_drawer'?'to_drawer':'to_bank';
+    rec.method=rec.direction==='to_bank'?'cash':'bank';   /* source of the money */
+    if(!rec.payee)rec.payee=rec.direction==='to_bank'?'Caja → Banco':'Banco → Caja';}
+  if(!rec.amount){alert('Enter an amount');return;}
+  DB.settlements.push(rec);save();closeModal();render();
+}
+function delSettlement(id){
+  if(!confirm('Delete this movement?'))return;
+  DB.settlements=DB.settlements.filter(x=>x.id!==id);save();render();
+}
+
+/* ============================================================ EXPORT / IMPORT / CSV ============================================================ */
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const d=new Date(),p=n=>String(n).padStart(2,'0');
+  const stamp=today()+'_'+p(d.getHours())+'-'+p(d.getMinutes())+'-'+p(d.getSeconds());
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='EnsenadaVerde_V4.3.1_'+stamp+'.json';a.click();
+}
+function exportCSV(){
+  const head=['Date','Time','Product','Client','Salesperson','Supplier','UnitPrice','Qty','Amount','EV_20','Seller_20','Supplier_60','Packaging','Status','Method','Notes'];
+  const rows=[...DB.sales].sort((a,b)=>saleSortKey(a).localeCompare(saleSortKey(b))).map(s=>{const x=split(s);
+    return [s.date,s.ts?s.ts.slice(11,19):'',s.product,s.client,isEventSale(s)?('Event:'+esc(s.eventName||'')):s.seller,s.supplier,s.price,s.qty,x.amt,x.ev,x.seller,x.supplier,x.packaging,PAY_STATES[s.state].label,mth(s),s.notes||''];});
+  const cell=c=>{c=String(c==null?'':c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;};
+  const csv=[head].concat(rows).map(r=>r.map(cell).join(',')).join('\r\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download='EnsenadaVerde_sales_'+today()+'.csv';a.click();
+}
+function importJSON(file){
+  const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);
+    if(!d.sales||!d.salespersons)throw 0;
+    if(!confirm('Replace all current data with this backup?'))return;
+    if(!d.packagingExpenses)d.packagingExpenses=[];
+    if(!d.settings)d.settings={adminPin:''};
+    migrateMethods(d);
+    DB=d;_cloudSynced=true;save(DB,{allowReset:true});render();alert('Imported.');
+  }catch(err){alert('That file is not a valid Ensenada Verde backup.');}};
+  r.readAsText(file);
+}
+
+/* ============================================================ INIT ============================================================ */
+document.getElementById('nav').addEventListener('click',e=>{
+  const a=e.target.closest('a');if(!a)return;
+  document.querySelectorAll('#nav a').forEach(x=>x.classList.remove('active'));a.classList.add('active');
+  currentView=a.dataset.view;render();
+});
+document.getElementById('monthFilter').addEventListener('change',e=>{currentMonth=e.target.value;render();});
+document.getElementById('btnCSV').addEventListener('click',exportCSV);
+document.getElementById('btnLang').addEventListener('click',()=>{LANG=LANG==='es'?'en':'es';lsSet('ev_lang',LANG);applyStatic();render();});
+
+applyStatic();
+render();
+startupSync();
+
+/* ============================================================
+   ACTIVITY LOG → Google Sheet (Apps Script Web App)
+   Posts one row per data-change event, tagged AUTOMATICALLY by device:
+   timestamps, auto device label (browser · OS), persistent device id,
+   IP + location, event type, before/after details. No user setup, no
+   name to type. Fully fail-safe: if a post fails the event queues
+   locally and is retried (app_open / Sync now).
+   ============================================================ */
+(function(){
+  try{
+    if(!DB.settings)DB.settings={};
+    var DID=lsGet('ev_device_id');if(!DID){DID='dev_'+Math.random().toString(36).slice(2,10);lsSet('ev_device_id',DID);}
+    var IPINFO=null;
+    function cfg(k){return (DB.settings&&DB.settings[k])||'';}
+    /* Friendly device label derived from the user agent — no typing required. */
+    function uaLabel(){var u=navigator.userAgent||'';
+      var br=/Edg\//.test(u)?'Edge':/OPR\/|Opera/.test(u)?'Opera':/Firefox\//.test(u)?'Firefox':/Chrome\//.test(u)?'Chrome':/Safari\//.test(u)?'Safari':'Browser';
+      var os=/Android/.test(u)?'Android':/iPhone|iPad|iPod/.test(u)?'iOS':/Windows/.test(u)?'Windows':/Mac OS X|Macintosh/.test(u)?'macOS':/Linux/.test(u)?'Linux':'';
+      return br+(os?' · '+os:'');}
+    function meta(){var n=navigator,s=screen,tz='';try{tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'';}catch(e){}
+      return {ua:n.userAgent||'',platform:n.platform||'',vendor:n.vendor||'',lang:n.language||'',screen:(s.width+'x'+s.height),dpr:window.devicePixelRatio||1,tz:tz,app:'Ensenada Verde V4.3.1',device_label:uaLabel()};}
+    function qGet(){try{return JSON.parse(lsGet('ev_log_queue')||'[]');}catch(e){return [];}}
+    function qSet(q){lsSet('ev_log_queue',JSON.stringify(q));}
+    function stampIP(e){if(IPINFO){e.ip=IPINFO.ip||'';e.city=IPINFO.city||'';e.region=IPINFO.region||'';e.country=IPINFO.country_name||IPINFO.country||'';e.org=IPINFO.org||IPINFO.asn||'';}return e;}
+    /* no-cors + text/plain → a "simple" request, so NO CORS preflight. (The old
+       application/json POST triggered an OPTIONS preflight that Apps Script never
+       answers — which is why logging silently failed on some browsers/devices.) */
+    function post(entry){
+      try{fetch(getSyncUrl(),{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(entry)})
+        .catch(function(){var q=qGet();q.push(entry);qSet(q);});}
+      catch(e){var q=qGet();q.push(entry);qSet(q);}
+    }
+    function flush(){var q=qGet();if(!q.length)return;qSet([]);q.forEach(function(e){if(!e.ip)stampIP(e);post(e);});}
+    window.logEvent=function(event,details){
+      try{var m=meta();
+        var entry={ts_client:new Date().toISOString(),device_label:m.device_label,device_user:m.device_label,device_id:DID,event:event,details:details||{},
+          ua:m.ua,platform:m.platform,vendor:m.vendor,screen:m.screen,dpr:m.dpr,lang:m.lang,tz:m.tz,app:m.app};
+        stampIP(entry);post(entry);
+      }catch(e){}
+    };
+    function updateQStatus(){var el=document.getElementById('set_qstatus');if(el)el.textContent=qGet().length+' event(s) queued locally';}
+    window.logQueueCount=function(){return qGet().length;};
+    window.updateQStatus=updateQStatus;
+    /* Read-only identity surfaced in Settings — all auto, nothing to type. */
+    window.evDeviceInfo=function(){return {id:DID,label:uaLabel(),ip:(IPINFO&&IPINFO.ip)||'',city:(IPINFO&&(IPINFO.city||IPINFO.region))||''};};
+    window.evRenderDevInfo=function(){var el=document.getElementById('set_devinfo');if(!el)return;var i=window.evDeviceInfo();
+      el.innerHTML='<div><span>Device</span><b>'+i.label+'</b></div>'+
+        '<div><span>Device ID</span><b>'+i.id+'</b></div>'+
+        '<div><span>IP</span><b>'+(i.ip||'…')+(i.city?' ('+i.city+')':'')+'</b></div>';};
+    window.syncLogs=function(){
+      var n=qGet().length;flush();updateQStatus();
+      alert(n?('Syncing '+n+' queued event'+(n!==1?'s':'')+'… check your Google Sheet.'):'Nothing queued — all caught up.');
+    };
+    function diffColl(b,a){var bi={},ai={};b.forEach(function(x){bi[x.id]=x;});a.forEach(function(x){ai[x.id]=x;});
+      for(var i in ai){if(!bi[i])return{action:'create',record:ai[i]};}
+      for(var j in bi){if(!ai[j])return{action:'delete',record:bi[j]};}
+      for(var k in ai){if(JSON.stringify(ai[k])!==JSON.stringify(bi[k]))return{action:'edit',record:ai[k],before:bi[k]};}
+      return null;}
+    function wrapColl(name,label,key){var orig=window[name];if(typeof orig!=='function')return;
+      window[name]=function(){var before=JSON.stringify(DB[key]||[]);var r=orig.apply(this,arguments);
+        try{var d=diffColl(JSON.parse(before),DB[key]||[]);if(d)logEvent(label+'_'+d.action,d.action==='edit'?{record:d.record,before:d.before}:{record:d.record});}catch(e){}
+        return r;};}
+    wrapColl('saveSale','sale','sales');wrapColl('delSale','sale','sales');
+    wrapColl('saveClient','client','clients');wrapColl('delClient','client','clients');
+    wrapColl('saveProduct','product','products');wrapColl('delProduct','product','products');
+    wrapColl('savePkg','packaging','packagingExpenses');wrapColl('delPkg','packaging','packagingExpenses');
+    wrapColl('savePay','settlement','settlements');wrapColl('delSettlement','settlement','settlements');
+    (function(){var orig=window.startFresh;if(typeof orig==='function'){window.startFresh=function(){var b={sales:DB.sales.length,packaging:(DB.packagingExpenses||[]).length,settlements:DB.settlements.length};var r=orig.apply(this,arguments);if((b.sales+b.packaging+b.settlements)>0&&DB.sales.length===0&&(DB.packagingExpenses||[]).length===0&&DB.settlements.length===0)logEvent('reset',{cleared:b});return r;};}})();
+    (function(){var orig=window.saveAdminPin;if(typeof orig==='function'){window.saveAdminPin=function(){var r=orig.apply(this,arguments);logEvent('pin_change',{pin_set:!!cfg('adminPin')});return r;};}})();
+    var started=false;
+    function go(){if(started)return;started=true;
+      logEvent('app_open',{});flush();
+    }
+    try{fetch('https://ipapi.co/json/').then(function(r){return r.json();}).then(function(d){IPINFO=d;go();})['catch'](go);}catch(e){go();}
+    setTimeout(go,2500);
+  }catch(e){}
+})();
+
+</script>
+</body>
+</html>
